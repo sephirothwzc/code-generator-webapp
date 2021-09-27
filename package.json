@@ -1,0 +1,38 @@
+{
+  "name": "code-generator-midway2",
+  "version": "1.0.0",
+  "description": "midway2.0 生成器",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "start": "ts-node-dev --respawn src/index.ts",
+    "code": "node dist/index.js",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/figlet": "^1.5.4",
+    "@types/inquirer": "^8.1.2",
+    "@types/lodash": "^4.14.174",
+    "@types/minimist": "^1.2.2",
+    "@types/node": "^16.10.1",
+    "@types/shelljs": "^0.8.9",
+    "nodemon": "^2.0.13",
+    "ts-node": "^10.2.1",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.4.3"
+  },
+  "author": "zhanchao.wu@icloud.com",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "figlet": "^1.5.2",
+    "inquirer": "^8.1.5",
+    "lodash": "^4.17.21",
+    "minimist": "^1.2.5",
+    "mysql2": "^2.3.0",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^6.6.5",
+    "sequelize-typescript": "^2.1.0",
+    "shelljs": "^0.8.4"
+  }
+}
