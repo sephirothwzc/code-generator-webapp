@@ -4,7 +4,12 @@ import { get } from 'lodash';
 import shell from 'shelljs';
 import { Sequelize } from 'sequelize-typescript';
 import { QueryTypes } from 'sequelize';
+import { send as entitySend } from './code-entity';
+import fs from 'fs';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
+// #region interface
 export interface InitInProp {
   configNodeEnv: string;
 }
@@ -24,10 +29,112 @@ export interface IQueryTableOut {
   tableType: string;
 }
 
+export interface IQueryKeyColumnOut {
+  /**
+   * 拥有者
+   */
+  tableSchema: string;
+  /**
+   * 父表名称
+   */
+  referencedTableName: string;
+  /**
+   * 父表字段
+   */
+  referencedColumnName: string;
+  /**
+   * 子表名称
+   */
+  tableName: string;
+  /**
+   * 子表字段
+   */
+  columnName: string;
+  /**
+   * 约束名
+   */
+  constraintName: string;
+  /**
+   * 表注释
+   */
+  tableComment: string;
+  /**
+   * 约束更新规则
+   */
+  updateRule: string;
+  /**
+   * 约束删除规则
+   */
+  deleteRule: string;
+}
+
+export interface IQueryColumnOut {
+  tableName: string;
+  columnName: string;
+  columnComment: string;
+  columnType: string;
+  dataType: string;
+  characterMaximumLength: string;
+}
+// #endregion
+
+/**
+ * 获取链接
+ * @param config
+ * @returns
+ */
+const getConn: (config: ISequelizeConfig) => Sequelize = (() => {
+  let sequelize: Sequelize;
+  const factory = (config: ISequelizeConfig) => {
+    console.log(`db 初始化!`);
+    !sequelize && (sequelize = new Sequelize(config));
+    return sequelize;
+  };
+  return factory;
+})();
+
 /**
  * 生成类型
  */
 const codeTypeArray = ['entity', 'graphql', 'schema', 'resolver', 'service', 'hook'];
+
+export interface IFileObject {
+  fun: (
+    columnList: Array<IQueryColumnOut>,
+    tableItem: IQueryTableOut,
+    keyColumnList: Array<IQueryKeyColumnOut>
+  ) => Promise<string>;
+  path: string;
+  /**
+   * 后缀
+   */
+  suffix?: string;
+  /**
+   * 扩展名
+   */
+  extension?: string;
+}
+
+/**
+ * 生成对象
+ */
+const allFun = {
+  entity: {
+    fun: entitySend,
+    /**
+     * 路径
+     */
+    path: `./src/lib/models`,
+    /**
+     * 前缀
+     */
+    suffix: `entity`,
+    /**
+     * 扩展名 可以为空默认 ts
+     */
+    extension: 'ts',
+  },
+};
 
 /**
  * 加载配置信息
@@ -71,7 +178,7 @@ const confirmDBConfig = async (database: string) => {
  * @param config
  */
 const queryTable = async (config: ISequelizeConfig) => {
-  const sequelize = new Sequelize(config);
+  const sequelize = getConn(config);
   const result = await sequelize.query<IQueryTableOut>(
     `select table_name AS tableName,table_comment AS tableComment,table_type AS tableType
      from information_schema.tables where table_name <> 'sequelizemeta' 
@@ -95,15 +202,74 @@ const queryTable = async (config: ISequelizeConfig) => {
  * @param table
  * @param types
  */
-const fileSend = async (tables: [{ name: string }], types: [string]) => {
+const fileSend = async (
+  tables: [{ name: string; value: IQueryTableOut }],
+  types: [string],
+  config: ISequelizeConfig
+) => {
   // 循环table选择
   tables &&
     types &&
-    tables.forEach((p) => {
+    tables.forEach(async (p) => {
       // 获取columns
-      const columnList = await queryColumn(p.name);
-      const keyColumnList = await queryKeyColumn(p.name);
+      const columnList = await queryColumn(config, p.name);
+      const keyColumnList = await queryKeyColumn(config, p.name);
+      types.forEach(async (x) => {
+        // 生成文件
+        const fileObj: IFileObject = await get(allFun, x);
+        const codeStr = await fileObj.fun(columnList, p.value, keyColumnList);
+        codeStr && (await createFile(fileObj, p.name, codeStr, x));
+      });
     });
+};
+
+/**
+ * 创建文件
+ * @param {string}  文件名
+ */
+const createFile = async (
+  fileObj: IFileObject,
+  tableName: string,
+  txt: string,
+  type: string
+): Promise<void> => {
+  if (!txt) {
+    return;
+  }
+  // 文件名
+  const fileName = tableName.replace(/_/g, '-');
+  const filePath = get(fileObj, type, `./out/${type}`);
+
+  shell.mkdir('-p', filePath);
+  const fullPath = `${filePath}/${fileName}.${fileObj?.suffix}.${
+    fileObj.extension || 'ts'
+  }`.replace(/../g, '.');
+  fileWritePromise(fullPath, txt)
+    ?.then(() => {
+      success(filePath, fullPath);
+    })
+    .catch((error) => {
+      console.error(chalk.white.bgRed.bold(`Error: `) + `\t [${fileName}]${error}!`);
+    });
+};
+
+/**
+ * 成功提示
+ * @param {string} filepath 文件路径
+ */
+const success = (filepath: string, fullPath: string) => {
+  console.log(chalk.white.bgGreen.bold(`Done! File created`) + `\t [${filepath}]`);
+  // 格式化
+  exec(`npx prettier --write ${fullPath}`);
+  console.log(chalk.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
+};
+
+const fileWritePromise = (fullPath: string, txt: string) => {
+  if (!txt) {
+    return;
+  }
+  const fsWriteFile = promisify(fs.writeFile);
+  return fsWriteFile(fullPath, txt);
 };
 
 export const init = async (config: InitInProp) => {
@@ -115,7 +281,7 @@ export const init = async (config: InitInProp) => {
   // 选择导出对象
   const types = await askListQuestions(codeTypeArray, 'fileType', 'checkbox');
 
-  await fileSend(tables as any, types as any);
+  await fileSend(tables as any, types as any, db);
   console.log(db);
   console.log(tables);
   console.log(types);
@@ -143,6 +309,58 @@ const askListQuestions = (list: any[], key: string, type = 'list', message = key
   return inquirer.prompt(questions);
 };
 
-const queryColumn = async (name: string) => {
-  throw new Error('Function not implemented.');
+const queryColumn = async (
+  config: ISequelizeConfig,
+  name: string
+): Promise<Array<IQueryColumnOut>> => {
+  const sql = `SELECT table_name as tableName,column_name as columnName,
+COLUMN_COMMENT as columnComment,column_type as columnType,
+DATA_TYPE as dataType, CHARACTER_MAXIMUM_LENGTH as characterMaximumLength
+ FROM information_schema.columns 
+  WHERE table_schema=:database AND table_name=:name 
+  order by COLUMN_NAME`;
+  const sequelize = getConn(config);
+  const result = await sequelize.query<IQueryColumnOut>(sql, {
+    replacements: {
+      database: config.database,
+      name,
+    },
+    type: QueryTypes.SELECT,
+  });
+  return result;
+};
+
+const queryKeyColumn = async (
+  config: ISequelizeConfig,
+  name: string
+): Promise<Array<IQueryKeyColumnOut>> => {
+  const sql = `SELECT C.TABLE_SCHEMA as tableSchema,
+           C.REFERENCED_TABLE_NAME as referencedTableName,
+           C.REFERENCED_COLUMN_NAME as referencedColumnName,
+           C.TABLE_NAME as tableName,
+           C.COLUMN_NAME as columnName,
+           C.CONSTRAINT_NAME as constraintName,
+           T.TABLE_COMMENT as tableComment,
+           R.UPDATE_RULE as updateRule,
+           R.DELETE_RULE as deleteRule
+      FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE C
+      JOIN INFORMATION_SCHEMA. TABLES T
+        ON T.TABLE_NAME = C.TABLE_NAME
+      JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R
+        ON R.TABLE_NAME = C.TABLE_NAME
+       AND R.CONSTRAINT_NAME = C.CONSTRAINT_NAME
+       AND R.REFERENCED_TABLE_NAME = C.REFERENCED_TABLE_NAME
+      WHERE C.REFERENCED_TABLE_NAME IS NOT NULL 
+				AND (C.REFERENCED_TABLE_NAME = :tableName or C.TABLE_NAME = :tableName)
+        AND C.TABLE_SCHEMA = :database
+        group by CONSTRAINT_NAME order by CONSTRAINT_NAME`;
+  const sequelize = getConn(config);
+  const result = await sequelize.query<IQueryKeyColumnOut>(sql, {
+    replacements: {
+      database: config.database,
+      name,
+    },
+    type: QueryTypes.SELECT,
+  });
+  return result;
 };
