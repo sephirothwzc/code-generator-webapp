@@ -86,18 +86,18 @@ const createFile = async (fileObj, tableName, txt, type) => {
         return;
     }
     const fileName = tableName.replace(/_/g, '-');
-    const filePath = (0, lodash_1.get)(fileObj, type, `./out/${type}`);
+    const filePath = (0, lodash_1.get)(fileObj, 'path', `./out/${type}`);
+    console.log(filePath);
     shelljs_1.default.mkdir('-p', filePath);
     const fullPath = `${filePath}/${fileName}.${fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix}.${fileObj.extension || 'ts'}`.replace(/\.\./g, '.');
     await ((_a = fileWritePromise(fullPath, txt)) === null || _a === void 0 ? void 0 : _a.then(() => {
-        success(filePath, fullPath);
+        success(fullPath);
     }).catch((error) => {
         console.error(chalk_1.default.white.bgRed.bold(`Error: `) + `\t [${fileName}]${error}!`);
     }));
 };
-const success = (filepath, fullPath) => {
-    console.log(filepath);
-    shelljs_1.default.echo(`npx prettier --write ${filepath}`);
+const success = (fullPath) => {
+    shelljs_1.default.exec(`npx prettier --write ${fullPath}`);
     console.log(chalk_1.default.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
 };
 const fileWritePromise = (fullPath, txt) => {

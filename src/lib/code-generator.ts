@@ -235,8 +235,9 @@ const createFile = async (
   }
   // 文件名
   const fileName = tableName.replace(/_/g, '-');
-  const filePath = get(fileObj, type, `./out/${type}`);
 
+  const filePath = get(fileObj, 'path', `./out/${type}`);
+  console.log(filePath);
   shell.mkdir('-p', filePath);
   const fullPath = `${filePath}/${fileName}.${fileObj?.suffix}.${
     fileObj.extension || 'ts'
@@ -244,7 +245,7 @@ const createFile = async (
 
   await fileWritePromise(fullPath, txt)
     ?.then(() => {
-      success(filePath, fullPath);
+      success(fullPath);
     })
     .catch((error) => {
       console.error(chalk.white.bgRed.bold(`Error: `) + `\t [${fileName}]${error}!`);
@@ -253,14 +254,13 @@ const createFile = async (
 
 /**
  * 成功提示
- * @param {string} filepath 文件路径
+ * @param {string} fullPath 文件路径
  */
-const success = (filepath: string, fullPath: string) => {
-  console.log(filepath);
+const success = (fullPath: string) => {
   // 格式化
-  // exec(`npx prettier --write ${filepath}`);
+  // exec(`npx prettier --write ${fullPath}`);
   //
-  shell.echo(`npx prettier --write ${filepath}`);
+  shell.exec(`npx prettier --write ${fullPath}`);
   console.log(chalk.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
 };
 
