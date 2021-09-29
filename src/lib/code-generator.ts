@@ -6,8 +6,9 @@ import { Sequelize } from 'sequelize-typescript';
 import { QueryTypes } from 'sequelize';
 import { send as entitySend } from './code-entity';
 import fs from 'fs';
-import { promisify } from 'util';
-import { exec } from 'child_process';
+// import { promisify } from 'util';
+// import { exec } from 'child_process';
+import bluebird from 'bluebird';
 
 // #region interface
 export interface InitInProp {
@@ -75,23 +76,21 @@ export interface IQueryColumnOut {
   columnType: string;
   dataType: string;
   characterMaximumLength: string;
+  isNullable: string;
 }
 // #endregion
+
+let sequelize: Sequelize;
 
 /**
  * 获取链接
  * @param config
  * @returns
  */
-const getConn: (config: ISequelizeConfig) => Sequelize = (() => {
-  let sequelize: Sequelize;
-  const factory = (config: ISequelizeConfig) => {
-    console.log(`db 初始化!`);
-    !sequelize && (sequelize = new Sequelize(config));
-    return sequelize;
-  };
-  return factory;
-})();
+const getConn = (config: ISequelizeConfig): Sequelize => {
+  !sequelize && (sequelize = new Sequelize(config));
+  return sequelize;
+};
 
 /**
  * 生成类型
@@ -202,25 +201,23 @@ const queryTable = async (config: ISequelizeConfig) => {
  * @param table
  * @param types
  */
-const fileSend = async (
-  tables: [{ name: string; value: IQueryTableOut }],
-  types: [string],
-  config: ISequelizeConfig
-) => {
+const fileSend = async (tables: [IQueryTableOut], types: [string], config: ISequelizeConfig) => {
   // 循环table选择
   tables &&
     types &&
-    tables.forEach(async (p) => {
+    (await bluebird.each(tables, async (p) => {
       // 获取columns
-      const columnList = await queryColumn(config, p.name);
-      const keyColumnList = await queryKeyColumn(config, p.name);
-      types.forEach(async (x) => {
+      const columnList = await queryColumn(config, p.tableName);
+
+      const keyColumnList = await queryKeyColumn(config, p.tableName);
+
+      await bluebird.each(types, async (x) => {
         // 生成文件
         const fileObj: IFileObject = await get(allFun, x);
-        const codeStr = await fileObj.fun(columnList, p.value, keyColumnList);
-        codeStr && (await createFile(fileObj, p.name, codeStr, x));
+        const codeStr = await fileObj.fun(columnList, p, keyColumnList);
+        codeStr && (await createFile(fileObj, p.tableName, codeStr, x));
       });
-    });
+    }));
 };
 
 /**
@@ -243,8 +240,9 @@ const createFile = async (
   shell.mkdir('-p', filePath);
   const fullPath = `${filePath}/${fileName}.${fileObj?.suffix}.${
     fileObj.extension || 'ts'
-  }`.replace(/../g, '.');
-  fileWritePromise(fullPath, txt)
+  }`.replace(/\.\./g, '.');
+
+  await fileWritePromise(fullPath, txt)
     ?.then(() => {
       success(filePath, fullPath);
     })
@@ -258,9 +256,11 @@ const createFile = async (
  * @param {string} filepath 文件路径
  */
 const success = (filepath: string, fullPath: string) => {
-  console.log(chalk.white.bgGreen.bold(`Done! File created`) + `\t [${filepath}]`);
+  console.log(filepath);
   // 格式化
-  exec(`npx prettier --write ${fullPath}`);
+  // exec(`npx prettier --write ${filepath}`);
+  //
+  shell.echo(`npx prettier --write ${filepath}`);
   console.log(chalk.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
 };
 
@@ -268,8 +268,13 @@ const fileWritePromise = (fullPath: string, txt: string) => {
   if (!txt) {
     return;
   }
-  const fsWriteFile = promisify(fs.writeFile);
-  return fsWriteFile(fullPath, txt);
+  return new Promise((resolve, reject) => {
+    fs.writeFile(fullPath, txt, (error) => {
+      error ? reject(error) : resolve(fullPath);
+    });
+  });
+  // const fsWriteFile = promisify(fs.writeFile);
+  // return fsWriteFile(fullPath, txt);
 };
 
 export const init = async (config: InitInProp) => {
@@ -281,10 +286,8 @@ export const init = async (config: InitInProp) => {
   // 选择导出对象
   const types = await askListQuestions(codeTypeArray, 'fileType', 'checkbox');
 
-  await fileSend(tables as any, types as any, db);
-  console.log(db);
-  console.log(tables);
-  console.log(types);
+  await fileSend(tables.tableName as any, types.fileType as any, db);
+
   console.log(chalk.white.bgGreen.bold(`success!`));
   process.exit();
 };
@@ -315,11 +318,13 @@ const queryColumn = async (
 ): Promise<Array<IQueryColumnOut>> => {
   const sql = `SELECT table_name as tableName,column_name as columnName,
 COLUMN_COMMENT as columnComment,column_type as columnType,
-DATA_TYPE as dataType, CHARACTER_MAXIMUM_LENGTH as characterMaximumLength
+DATA_TYPE as dataType, CHARACTER_MAXIMUM_LENGTH as characterMaximumLength,
+is_Nullable as isNullable
  FROM information_schema.columns 
   WHERE table_schema=:database AND table_name=:name 
   order by COLUMN_NAME`;
   const sequelize = getConn(config);
+
   const result = await sequelize.query<IQueryColumnOut>(sql, {
     replacements: {
       database: config.database,
@@ -353,12 +358,12 @@ const queryKeyColumn = async (
       WHERE C.REFERENCED_TABLE_NAME IS NOT NULL 
 				AND (C.REFERENCED_TABLE_NAME = :tableName or C.TABLE_NAME = :tableName)
         AND C.TABLE_SCHEMA = :database
-        group by CONSTRAINT_NAME order by CONSTRAINT_NAME`;
+        group by C.CONSTRAINT_NAME order by C.CONSTRAINT_NAME`;
   const sequelize = getConn(config);
   const result = await sequelize.query<IQueryKeyColumnOut>(sql, {
     replacements: {
       database: config.database,
-      name,
+      tableName: name,
     },
     type: QueryTypes.SELECT,
   });
