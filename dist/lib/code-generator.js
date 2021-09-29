@@ -12,10 +12,11 @@ const sequelize_typescript_1 = require("sequelize-typescript");
 const sequelize_1 = require("sequelize");
 const code_entity_1 = require("./code-entity");
 const fs_1 = __importDefault(require("fs"));
-const util_1 = require("util");
-const child_process_1 = require("child_process");
+const bluebird_1 = __importDefault(require("bluebird"));
+let sequelize;
 const getConn = (config) => {
-    return new sequelize_typescript_1.Sequelize(config);
+    !sequelize && (sequelize = new sequelize_typescript_1.Sequelize(config));
+    return sequelize;
 };
 const codeTypeArray = ['entity', 'graphql', 'schema', 'resolver', 'service', 'hook'];
 const allFun = {
@@ -67,22 +68,17 @@ const queryTable = async (config) => {
     return tableList;
 };
 const fileSend = async (tables, types, config) => {
-    console.log(`1`);
     tables &&
         types &&
-        tables.forEach(async (p) => {
-            console.log(`2`);
+        (await bluebird_1.default.each(tables, async (p) => {
             const columnList = await queryColumn(config, p.tableName);
-            console.log(`3`);
             const keyColumnList = await queryKeyColumn(config, p.tableName);
-            console.log(`4`);
-            types.forEach(async (x) => {
-                console.log(x);
+            await bluebird_1.default.each(types, async (x) => {
                 const fileObj = await (0, lodash_1.get)(allFun, x);
                 const codeStr = await fileObj.fun(columnList, p, keyColumnList);
                 codeStr && (await createFile(fileObj, p.tableName, codeStr, x));
             });
-        });
+        }));
 };
 const createFile = async (fileObj, tableName, txt, type) => {
     var _a;
@@ -92,24 +88,27 @@ const createFile = async (fileObj, tableName, txt, type) => {
     const fileName = tableName.replace(/_/g, '-');
     const filePath = (0, lodash_1.get)(fileObj, type, `./out/${type}`);
     shelljs_1.default.mkdir('-p', filePath);
-    const fullPath = `${filePath}/${fileName}.${fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix}.${fileObj.extension || 'ts'}`.replace(/../g, '.');
-    (_a = fileWritePromise(fullPath, txt)) === null || _a === void 0 ? void 0 : _a.then(() => {
+    const fullPath = `${filePath}/${fileName}.${fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix}.${fileObj.extension || 'ts'}`.replace(/\.\./g, '.');
+    await ((_a = fileWritePromise(fullPath, txt)) === null || _a === void 0 ? void 0 : _a.then(() => {
         success(filePath, fullPath);
     }).catch((error) => {
         console.error(chalk_1.default.white.bgRed.bold(`Error: `) + `\t [${fileName}]${error}!`);
-    });
+    }));
 };
 const success = (filepath, fullPath) => {
-    console.log(chalk_1.default.white.bgGreen.bold(`Done! File created`) + `\t [${filepath}]`);
-    (0, child_process_1.exec)(`npx prettier --write ${fullPath}`);
+    console.log(filepath);
+    shelljs_1.default.echo(`npx prettier --write ${filepath}`);
     console.log(chalk_1.default.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
 };
 const fileWritePromise = (fullPath, txt) => {
     if (!txt) {
         return;
     }
-    const fsWriteFile = (0, util_1.promisify)(fs_1.default.writeFile);
-    return fsWriteFile(fullPath, txt);
+    return new Promise((resolve, reject) => {
+        fs_1.default.writeFile(fullPath, txt, (error) => {
+            error ? reject(error) : resolve(fullPath);
+        });
+    });
 };
 const init = async (config) => {
     const db = envConfig(config.configNodeEnv);
@@ -142,19 +141,13 @@ is_Nullable as isNullable
   WHERE table_schema=:database AND table_name=:name 
   order by COLUMN_NAME`;
     const sequelize = getConn(config);
-    const result = await sequelize
-        .query(sql, {
+    const result = await sequelize.query(sql, {
         replacements: {
             database: config.database,
             name,
         },
         type: sequelize_1.QueryTypes.SELECT,
-    })
-        .then((result) => {
-        console.log(result);
-        return result;
-    })
-        .catch((error) => console.log(error));
+    });
     return result;
 };
 const queryKeyColumn = async (config, name) => {
@@ -177,12 +170,12 @@ const queryKeyColumn = async (config, name) => {
       WHERE C.REFERENCED_TABLE_NAME IS NOT NULL 
 				AND (C.REFERENCED_TABLE_NAME = :tableName or C.TABLE_NAME = :tableName)
         AND C.TABLE_SCHEMA = :database
-        group by CONSTRAINT_NAME order by CONSTRAINT_NAME`;
+        group by C.CONSTRAINT_NAME order by C.CONSTRAINT_NAME`;
     const sequelize = getConn(config);
     const result = await sequelize.query(sql, {
         replacements: {
             database: config.database,
-            name,
+            tableName: name,
         },
         type: sequelize_1.QueryTypes.SELECT,
     });

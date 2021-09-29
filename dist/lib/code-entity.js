@@ -98,7 +98,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
     });
     const [columns, txtImport, importBelongsTo, importHasManyTo] = findForeignKey(tableItem, keyColumnList);
     return [
-        [...normal, columns].join(),
+        [...normal, columns].join(''),
         txtImport,
         importBelongsTo,
         importHasManyTo,
@@ -107,17 +107,20 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
 };
 const send = (columnList, tableItem, keyColumnList) => {
     const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo] = findColumn(columnList, tableItem, keyColumnList);
-    const seuqliezeTypeImport = `${importBelongsTo ? ' BelongsTo, ' : ''}${importHasManyTo ? ' HasMany, ' : ''}${importForeignKeyTo ? ' ForeignKey, ' : ''}`;
+    const seuqliezeTypeImport = new Set(['Column', 'Model']);
+    importBelongsTo && seuqliezeTypeImport.add('BelongsTo');
+    importHasManyTo && seuqliezeTypeImport.add('HasMany');
+    importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
     return modelTemplate({
         className: (0, lodash_1.capitalize)(tableItem.tableName),
         columns: (0, lodash_1.toString)(columns),
-        txtImport: Array.from(txtImport).join(),
-        seuqliezeTypeImport,
+        txtImport: Array.from(txtImport).join(''),
+        seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
     });
 };
 exports.send = send;
 const modelTemplate = ({ className, columns, txtImport, seuqliezeTypeImport, }) => {
-    return `import { Column, Model${seuqliezeTypeImport} } from 'sequelize-typescript';
+    const txt = `import { ${seuqliezeTypeImport} } from 'sequelize-typescript';
 import { BaseTable } from '@midwayjs/sequelize';${txtImport}
 
 @BaseTable
@@ -126,5 +129,6 @@ ${columns}
 }
 
 `;
+    return txt;
 };
 //# sourceMappingURL=code-entity.js.map
