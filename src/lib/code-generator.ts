@@ -4,9 +4,10 @@ import { get } from 'lodash';
 import shell from 'shelljs';
 import { Sequelize } from 'sequelize-typescript';
 import { QueryTypes } from 'sequelize';
-import { send as entitySend } from './code-entity';
+import { send as entitySend } from './code-template/code-entity';
+import { send as typeGraphqlSend } from './code-template/code-type-graphql';
 import fs from 'fs';
-// import { promisify } from 'util';
+import { promisify } from 'util';
 // import { exec } from 'child_process';
 import bluebird from 'bluebird';
 
@@ -132,6 +133,10 @@ const allFun = {
      * 扩展名 可以为空默认 ts
      */
     extension: 'ts',
+  },
+  typeGraphql: {
+    fun: typeGraphqlSend,
+    path: './src/graphql',
   },
 };
 
@@ -268,13 +273,13 @@ const fileWritePromise = (fullPath: string, txt: string) => {
   if (!txt) {
     return;
   }
-  return new Promise((resolve, reject) => {
-    fs.writeFile(fullPath, txt, (error) => {
-      error ? reject(error) : resolve(fullPath);
-    });
-  });
-  // const fsWriteFile = promisify(fs.writeFile);
-  // return fsWriteFile(fullPath, txt);
+  // return new Promise((resolve, reject) => {
+  //   fs.writeFile(fullPath, txt, (error) => {
+  //     error ? reject(error) : resolve(fullPath);
+  //   });
+  // });
+  const fsWriteFile = promisify(fs.writeFile);
+  return fsWriteFile(fullPath, txt);
 };
 
 export const init = async (config: InitInProp) => {

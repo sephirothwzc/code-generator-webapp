@@ -1,4 +1,4 @@
-import { IQueryColumnOut, IQueryKeyColumnOut, IQueryTableOut } from './code-generator';
+import { IQueryColumnOut, IQueryKeyColumnOut, IQueryTableOut } from '../code-generator';
 import { capitalize, camelCase, toString } from 'lodash';
 
 const notColumn = [
