@@ -1,5 +1,6 @@
 import { IQueryColumnOut, IQueryKeyColumnOut, IQueryTableOut } from '../code-generator';
-import { camelCase, toString, upperCase } from 'lodash';
+import { camelCase, toString } from 'lodash';
+import { pascalCase } from '../utils/helper';
 
 const notColumn = [
   'id',
@@ -53,10 +54,9 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
       if (p.tableName === tableItem.tableName) {
         p.referencedTableName !== p.tableName &&
           txtImport.add(
-            `import { ${upperCase(p.referencedTableName)} } from './${p.referencedTableName.replace(
-              /_/g,
-              '-'
-            )}.entity';`
+            `import { ${pascalCase(
+              p.referencedTableName
+            )} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`
           );
         importBelongsTo = true;
         let hasManyTemp = '';
@@ -64,19 +64,19 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         if (p.referencedTableName === tableItem.tableName) {
           importHasManyTo = true;
           hasManyTemp = `
-  @HasMany(() => ${upperCase(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${upperCase(p.columnName)}: Array<${upperCase(p.tableName)}>;
+  @HasMany(() => ${pascalCase(p.tableName)}, '${p.columnName}')
+  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}>;
 `;
         }
         // 子表 外键 BelongsTo
         return `
-  @BelongsTo(() => ${upperCase(p.referencedTableName)}, '${p.columnName}')
-  ${upperCase(p.columnName)}Obj: ${upperCase(p.referencedTableName)};
+  @BelongsTo(() => ${pascalCase(p.referencedTableName)}, '${p.columnName}')
+  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)};
 ${hasManyTemp}`;
       } else {
         p.referencedTableName !== p.tableName &&
           txtImport.add(
-            `import { ${upperCase(p.tableName)} } from './${p.tableName.replace(
+            `import { ${pascalCase(p.tableName)} } from './${p.tableName.replace(
               /_/g,
               '-'
             )}.entity';`
@@ -84,8 +84,8 @@ ${hasManyTemp}`;
         importHasManyTo = true;
         // 主表 主键 Hasmany
         return `
-  @HasMany(() => ${upperCase(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${upperCase(p.columnName)}: Array<${upperCase(p.tableName)}>;
+  @HasMany(() => ${pascalCase(p.tableName)}, '${p.columnName}')
+  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}>;
 `;
       }
     })
@@ -115,7 +115,7 @@ const findColumn = (
       // 不需要引入 因为obj 时候会单独处理
       const foreignKeyTxt = foreignKey
         ? `
-  @ForeignKey(() => ${upperCase(foreignKey.referencedTableName)})`
+  @ForeignKey(() => ${pascalCase(foreignKey.referencedTableName)})`
         : '';
       foreignKeyTxt && (importForeignKeyTo = true);
 
@@ -165,7 +165,7 @@ export const send = (
   importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
 
   return modelTemplate({
-    className: upperCase(tableItem.tableName),
+    className: pascalCase(tableItem.tableName),
     columns: toString(columns),
     txtImport: Array.from(txtImport as Set<string>).join(''),
     seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
