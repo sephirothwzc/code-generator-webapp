@@ -183,6 +183,7 @@ const modelTemplate = ({
   seuqliezeTypeImport: string;
 }): string => {
   const txt = `import { ${seuqliezeTypeImport} } from 'sequelize-typescript';
+import { StaticSnowFlake } from '../utils/flake-id';
 import { BaseTable } from '@midwayjs/sequelize';${txtImport}
 
 @BaseTable

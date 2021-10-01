@@ -10,8 +10,10 @@ const lodash_1 = require("lodash");
 const shelljs_1 = __importDefault(require("shelljs"));
 const sequelize_typescript_1 = require("sequelize-typescript");
 const sequelize_1 = require("sequelize");
-const code_entity_1 = require("./code-entity");
+const code_entity_1 = require("./code-template/code-entity");
+const code_type_graphql_1 = require("./code-template/code-type-graphql");
 const fs_1 = __importDefault(require("fs"));
+const util_1 = require("util");
 const bluebird_1 = __importDefault(require("bluebird"));
 let sequelize;
 const getConn = (config) => {
@@ -22,9 +24,13 @@ const codeTypeArray = ['entity', 'graphql', 'schema', 'resolver', 'service', 'ho
 const allFun = {
     entity: {
         fun: code_entity_1.send,
-        path: `./src/lib/models`,
+        path: `./src/lib/model`,
         suffix: `entity`,
         extension: 'ts',
+    },
+    typeGraphql: {
+        fun: code_type_graphql_1.send,
+        path: './src/graphql',
     },
 };
 const envConfig = (env) => {
@@ -104,11 +110,8 @@ const fileWritePromise = (fullPath, txt) => {
     if (!txt) {
         return;
     }
-    return new Promise((resolve, reject) => {
-        fs_1.default.writeFile(fullPath, txt, (error) => {
-            error ? reject(error) : resolve(fullPath);
-        });
-    });
+    const fsWriteFile = (0, util_1.promisify)(fs_1.default.writeFile);
+    return fsWriteFile(fullPath, txt);
 };
 const init = async (config) => {
     const db = envConfig(config.configNodeEnv);

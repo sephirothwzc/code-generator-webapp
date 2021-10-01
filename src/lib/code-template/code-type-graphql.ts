@@ -167,7 +167,9 @@ export const send = (
     className: capitalize(tableItem.tableName),
     columns: toString(columns),
     txtImport: Array.from(txtImport as Set<string>).join(''),
+    typeImport: '',
     seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
+    validatorImport: '',
   });
 };
 
@@ -176,18 +178,23 @@ const modelTemplate = ({
   columns,
   txtImport,
   typeImport,
+  seuqliezeTypeImport,
   validatorImport,
 }: {
   className: string;
   columns: string;
   txtImport: string;
   typeImport: string;
+  seuqliezeTypeImport: string;
+  validatorImport: string;
 }): string => {
   const txt = `import { Field, ID, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}
 import { ${validatorImport} } from 'class-validator';
+${seuqliezeTypeImport}
 
 @ObjectType()
 export default class ${className} {
+  ${columns}
   @Field(() => ID)
   id!: number;
 

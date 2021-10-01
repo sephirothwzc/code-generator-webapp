@@ -8,7 +8,6 @@ import { send as entitySend } from './code-template/code-entity';
 import { send as typeGraphqlSend } from './code-template/code-type-graphql';
 import fs from 'fs';
 import { promisify } from 'util';
-// import { exec } from 'child_process';
 import bluebird from 'bluebird';
 
 // #region interface
@@ -124,7 +123,7 @@ const allFun = {
     /**
      * 路径
      */
-    path: `./src/lib/models`,
+    path: `./src/lib/model`,
     /**
      * 前缀
      */
