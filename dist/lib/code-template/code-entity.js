@@ -44,28 +44,28 @@ const findForeignKey = (tableItem, keyColumnList) => {
         .map((p) => {
         if (p.tableName === tableItem.tableName) {
             p.referencedTableName !== p.tableName &&
-                txtImport.add(`import { ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.referencedTableName))} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`);
+                txtImport.add(`import { ${(0, lodash_1.upperCase)(p.referencedTableName)} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`);
             importBelongsTo = true;
             let hasManyTemp = '';
             if (p.referencedTableName === tableItem.tableName) {
                 importHasManyTo = true;
                 hasManyTemp = `
-  @HasMany(() => ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.tableName))}, '${p.columnName}')
-  ${(0, lodash_1.camelCase)(p.tableName)}${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.columnName))}: Array<${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.tableName))}>;
+  @HasMany(() => ${(0, lodash_1.upperCase)(p.tableName)}, '${p.columnName}')
+  ${(0, lodash_1.camelCase)(p.tableName)}${(0, lodash_1.upperCase)(p.columnName)}: Array<${(0, lodash_1.upperCase)(p.tableName)}>;
 `;
             }
             return `
-  @BelongsTo(() => ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.referencedTableName))}, '${p.columnName}')
-  ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.columnName))}Obj: ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.referencedTableName))};
+  @BelongsTo(() => ${(0, lodash_1.upperCase)(p.referencedTableName)}, '${p.columnName}')
+  ${(0, lodash_1.upperCase)(p.columnName)}Obj: ${(0, lodash_1.upperCase)(p.referencedTableName)};
 ${hasManyTemp}`;
         }
         else {
             p.referencedTableName !== p.tableName &&
-                txtImport.add(`import { ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.tableName))} } from './${p.tableName.replace(/_/g, '-')}.entity';`);
+                txtImport.add(`import { ${(0, lodash_1.upperCase)(p.tableName)} } from './${p.tableName.replace(/_/g, '-')}.entity';`);
             importHasManyTo = true;
             return `
-  @HasMany(() => ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.tableName))}, '${p.columnName}')
-  ${(0, lodash_1.camelCase)(p.tableName)}${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.columnName))}: Array<${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(p.tableName))}>;
+  @HasMany(() => ${(0, lodash_1.upperCase)(p.tableName)}, '${p.columnName}')
+  ${(0, lodash_1.camelCase)(p.tableName)}${(0, lodash_1.upperCase)(p.columnName)}: Array<${(0, lodash_1.upperCase)(p.tableName)}>;
 `;
         }
     })
@@ -84,7 +84,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         const foreignKey = keyColumnList.find((columnRow) => columnRow.tableName === tableItem.tableName && columnRow.columnName === p.columnName);
         const foreignKeyTxt = foreignKey
             ? `
-  @ForeignKey(() => ${(0, lodash_1.capitalize)((0, lodash_1.camelCase)(foreignKey.referencedTableName))})`
+  @ForeignKey(() => ${(0, lodash_1.upperCase)(foreignKey.referencedTableName)})`
             : '';
         foreignKeyTxt && (importForeignKeyTo = true);
         return `  /**
@@ -119,7 +119,7 @@ const send = (columnList, tableItem, keyColumnList) => {
     importHasManyTo && seuqliezeTypeImport.add('HasMany');
     importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
     return modelTemplate({
-        className: (0, lodash_1.capitalize)((0, lodash_1.camelCase)(tableItem.tableName)),
+        className: (0, lodash_1.upperCase)(tableItem.tableName),
         columns: (0, lodash_1.toString)(columns),
         txtImport: Array.from(txtImport).join(''),
         seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
