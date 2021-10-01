@@ -54,7 +54,7 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         p.referencedTableName !== p.tableName &&
           txtImport.add(
             `import { ${capitalize(
-              p.referencedTableName
+              camelCase(p.referencedTableName)
             )} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`
           );
         importBelongsTo = true;
@@ -63,19 +63,21 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         if (p.referencedTableName === tableItem.tableName) {
           importHasManyTo = true;
           hasManyTemp = `
-  @HasMany(() => ${capitalize(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}>;
+  @HasMany(() => ${capitalize(camelCase(p.tableName))}, '${p.columnName}')
+  ${camelCase(p.tableName)}${capitalize(camelCase(p.columnName))}: Array<${capitalize(
+            camelCase(p.tableName)
+          )}>;
 `;
         }
         // 子表 外键 BelongsTo
         return `
-  @BelongsTo(() => ${capitalize(p.referencedTableName)}, '${p.columnName}')
-  ${capitalize(p.columnName)}Obj: ${capitalize(p.referencedTableName)};
+  @BelongsTo(() => ${capitalize(camelCase(p.referencedTableName))}, '${p.columnName}')
+  ${capitalize(camelCase(p.columnName))}Obj: ${capitalize(camelCase(p.referencedTableName))};
 ${hasManyTemp}`;
       } else {
         p.referencedTableName !== p.tableName &&
           txtImport.add(
-            `import { ${capitalize(p.tableName)} } from './${p.tableName.replace(
+            `import { ${capitalize(camelCase(p.tableName))} } from './${p.tableName.replace(
               /_/g,
               '-'
             )}.entity';`
@@ -83,8 +85,10 @@ ${hasManyTemp}`;
         importHasManyTo = true;
         // 主表 主键 Hasmany
         return `
-  @HasMany(() => ${capitalize(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}>;
+  @HasMany(() => ${capitalize(camelCase(p.tableName))}, '${p.columnName}')
+  ${camelCase(p.tableName)}${capitalize(camelCase(p.columnName))}: Array<${capitalize(
+          camelCase(p.tableName)
+        )}>;
 `;
       }
     })
@@ -114,7 +118,7 @@ const findColumn = (
       // 不需要引入 因为obj 时候会单独处理
       const foreignKeyTxt = foreignKey
         ? `
-  @ForeignKey(() => ${capitalize(foreignKey.referencedTableName)})`
+  @ForeignKey(() => ${capitalize(camelCase(foreignKey.referencedTableName))})`
         : '';
       foreignKeyTxt && (importForeignKeyTo = true);
 
@@ -164,7 +168,7 @@ export const send = (
   importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
 
   return modelTemplate({
-    className: capitalize(tableItem.tableName),
+    className: capitalize(camelCase(tableItem.tableName)),
     columns: toString(columns),
     txtImport: Array.from(txtImport as Set<string>).join(''),
     seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
