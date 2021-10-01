@@ -131,8 +131,15 @@ const findColumn = (
     tableItem,
     keyColumnList
   );
+  const idColumn = `@Column({
+    primaryKey: true,
+    autoIncrement: false,
+    defaultValue: () => StaticSnowFlake.next(),
+  })
+  id: string;
+`;
   return [
-    [...normal, columns].join(''),
+    [idColumn, ...normal, columns].join(''),
     txtImport,
     importBelongsTo,
     importHasManyTo,

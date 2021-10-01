@@ -1,15 +1,20 @@
 {
   "name": "code-generator-midway2",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "midway2.0 生成器",
   "main": "index.js",
   "scripts": {
+    "commit": "git add . && git-cz && git push",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "dev": "nodemon --exec ts-node src/index.ts",
     "start": "ts-node-dev --respawn src/index.ts",
     "code": "node dist/index.js",
     "build": "tsc"
   },
   "devDependencies": {
+    "@commitlint/cli": "^13.2.0",
+    "@commitlint/config-angular": "^13.2.0",
+    "@commitlint/config-conventional": "^13.2.0",
     "@types/bluebird": "^3.5.36",
     "@types/figlet": "^1.5.4",
     "@types/inquirer": "^8.1.2",
@@ -17,6 +22,8 @@
     "@types/minimist": "^1.2.2",
     "@types/node": "^16.10.1",
     "@types/shelljs": "^0.8.9",
+    "conventional-changelog-cli": "^2.1.1",
+    "husky": "^7.0.2",
     "nodemon": "^2.0.13",
     "prettier": "^2.4.1",
     "ts-node": "^10.2.1",
@@ -37,5 +44,18 @@
     "sequelize": "^6.6.5",
     "sequelize-typescript": "^2.1.0",
     "shelljs": "^0.8.4"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -e $HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged",
+      "pre-add": "lint-staged",
+      "pre-push": "lint-staged"
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }
