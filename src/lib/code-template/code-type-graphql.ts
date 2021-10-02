@@ -1,4 +1,4 @@
-import { IQueryColumnOut, IQueryKeyColumnOut, IQueryTableOut } from '../code-generator';
+import { IQueryColumnOut, IQueryKeyColumnOut, IQueryTableOut, ISend } from '../code-generator';
 import { capitalize, camelCase, toString } from 'lodash';
 
 const notColumn = [
@@ -147,11 +147,7 @@ const findColumn = (
  * @param keyColumnList
  * @returns
  */
-export const send = (
-  columnList: Array<IQueryColumnOut>,
-  tableItem: IQueryTableOut,
-  keyColumnList: Array<IQueryKeyColumnOut>
-) => {
+export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
   const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo] = findColumn(
     columnList,
     tableItem,

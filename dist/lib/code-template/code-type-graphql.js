@@ -105,7 +105,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         importForeignKeyTo,
     ];
 };
-const send = (columnList, tableItem, keyColumnList) => {
+const send = ({ columnList, tableItem, keyColumnList }) => {
     const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo] = findColumn(columnList, tableItem, keyColumnList);
     const seuqliezeTypeImport = new Set(['Column', 'Model']);
     importBelongsTo && seuqliezeTypeImport.add('BelongsTo');

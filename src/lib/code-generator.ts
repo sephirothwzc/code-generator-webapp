@@ -6,11 +6,18 @@ import { Sequelize } from 'sequelize-typescript';
 import { QueryTypes } from 'sequelize';
 import { send as entitySend } from './code-template/code-entity';
 import { send as typeGraphqlSend } from './code-template/code-type-graphql';
+import { send as serviceSend } from './code-template/code-service';
 import fs from 'fs';
 import { promisify } from 'util';
 import bluebird from 'bluebird';
 
 // #region interface
+export interface ISend {
+  columnList: Array<IQueryColumnOut>;
+  tableItem: IQueryTableOut;
+  keyColumnList: Array<IQueryKeyColumnOut>;
+}
+
 export interface InitInProp {
   configNodeEnv: string;
 }
@@ -136,6 +143,11 @@ const allFun = {
   typeGraphql: {
     fun: typeGraphqlSend,
     path: './src/graphql',
+  },
+  service: {
+    fun: serviceSend,
+    path: `./src/service`,
+    suffix: 'service',
   },
 };
 

@@ -12,6 +12,7 @@ const sequelize_typescript_1 = require("sequelize-typescript");
 const sequelize_1 = require("sequelize");
 const code_entity_1 = require("./code-template/code-entity");
 const code_type_graphql_1 = require("./code-template/code-type-graphql");
+const code_service_1 = require("./code-template/code-service");
 const fs_1 = __importDefault(require("fs"));
 const util_1 = require("util");
 const bluebird_1 = __importDefault(require("bluebird"));
@@ -31,6 +32,11 @@ const allFun = {
     typeGraphql: {
         fun: code_type_graphql_1.send,
         path: './src/graphql',
+    },
+    service: {
+        fun: code_service_1.send,
+        path: `./src/service`,
+        suffix: 'service',
     },
 };
 const envConfig = (env) => {
