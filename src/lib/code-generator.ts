@@ -105,11 +105,15 @@ const getConn = (config: ISequelizeConfig): Sequelize => {
 const codeTypeArray = ['entity', 'graphql', 'schema', 'resolver', 'service', 'hook'];
 
 export interface IFileObject {
-  fun: (
-    columnList: Array<IQueryColumnOut>,
-    tableItem: IQueryTableOut,
-    keyColumnList: Array<IQueryKeyColumnOut>
-  ) => Promise<string>;
+  fun: ({
+    columnList,
+    tableItem,
+    keyColumnList,
+  }: {
+    columnList: Array<IQueryColumnOut>;
+    tableItem: IQueryTableOut;
+    keyColumnList: Array<IQueryKeyColumnOut>;
+  }) => Promise<string>;
   path: string;
   /**
    * 后缀
@@ -230,7 +234,7 @@ const fileSend = async (tables: [IQueryTableOut], types: [string], config: ISequ
       await bluebird.each(types, async (x) => {
         // 生成文件
         const fileObj: IFileObject = await get(allFun, x);
-        const codeStr = await fileObj.fun(columnList, p, keyColumnList);
+        const codeStr = await fileObj.fun({ columnList, tableItem: p, keyColumnList });
         codeStr && (await createFile(fileObj, p.tableName, codeStr, x));
       });
     }));
@@ -276,19 +280,15 @@ const success = (fullPath: string) => {
   // 格式化
   // exec(`npx prettier --write ${fullPath}`);
   //
-  shell.exec(`npx prettier --write ${fullPath}`);
   console.log(chalk.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
+  shell.exec(`npx prettier --write ${fullPath}`);
 };
 
 const fileWritePromise = (fullPath: string, txt: string) => {
   if (!txt) {
     return;
   }
-  // return new Promise((resolve, reject) => {
-  //   fs.writeFile(fullPath, txt, (error) => {
-  //     error ? reject(error) : resolve(fullPath);
-  //   });
-  // });
+
   const fsWriteFile = promisify(fs.writeFile);
   return fsWriteFile(fullPath, txt);
 };
@@ -348,7 +348,7 @@ is_Nullable as isNullable
     },
     type: QueryTypes.SELECT,
   });
-  return result;
+  return result || [];
 };
 
 const queryKeyColumn = async (
@@ -383,5 +383,5 @@ const queryKeyColumn = async (
     },
     type: QueryTypes.SELECT,
   });
-  return result;
+  return result || [];
 };

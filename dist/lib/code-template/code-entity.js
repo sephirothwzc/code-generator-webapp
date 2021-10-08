@@ -45,28 +45,28 @@ const findForeignKey = (tableItem, keyColumnList) => {
         .map((p) => {
         if (p.tableName === tableItem.tableName) {
             p.referencedTableName !== p.tableName &&
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`);
             importBelongsTo = true;
             let hasManyTemp = '';
             if (p.referencedTableName === tableItem.tableName) {
                 importHasManyTo = true;
                 hasManyTemp = `
-  @HasMany(() => ${(0, helper_1.pascalCase)(p.tableName)}, '${p.columnName}')
+  @HasMany(() => ${(0, helper_1.pascalCase)(p.tableName)}Entity, '${p.columnName}')
   ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}: Array<${(0, helper_1.pascalCase)(p.tableName)}>;
 `;
             }
             return `
-  @BelongsTo(() => ${(0, helper_1.pascalCase)(p.referencedTableName)}, '${p.columnName}')
-  ${(0, helper_1.pascalCase)(p.columnName)}Obj: ${(0, helper_1.pascalCase)(p.referencedTableName)};
+  @BelongsTo(() => ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity, '${p.columnName}')
+  ${(0, helper_1.pascalCase)(p.columnName)}Obj: ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
         }
         else {
             p.referencedTableName !== p.tableName &&
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)} } from './${p.tableName.replace(/_/g, '-')}.entity';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from './${p.tableName.replace(/_/g, '-')}.entity';`);
             importHasManyTo = true;
             return `
-  @HasMany(() => ${(0, helper_1.pascalCase)(p.tableName)}, '${p.columnName}')
-  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}: Array<${(0, helper_1.pascalCase)(p.tableName)}>;
+  @HasMany(() => ${(0, helper_1.pascalCase)(p.tableName)}Entity, '${p.columnName}')
+  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}: Array<${(0, helper_1.pascalCase)(p.tableName)}Entity>;
 `;
         }
     })
@@ -85,7 +85,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         const foreignKey = keyColumnList.find((columnRow) => columnRow.tableName === tableItem.tableName && columnRow.columnName === p.columnName);
         const foreignKeyTxt = foreignKey
             ? `
-  @ForeignKey(() => ${(0, helper_1.pascalCase)(foreignKey.referencedTableName)})`
+  @ForeignKey(() => ${(0, helper_1.pascalCase)(foreignKey.referencedTableName)}Entity)`
             : '';
         foreignKeyTxt && (importForeignKeyTo = true);
         return `  /**
@@ -98,15 +98,8 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
 `;
     });
     const [columns, txtImport, importBelongsTo, importHasManyTo] = findForeignKey(tableItem, keyColumnList);
-    const idColumn = `@Column({
-    primaryKey: true,
-    autoIncrement: false,
-    defaultValue: () => StaticSnowFlake.next(),
-  })
-  id: string;
-`;
     return [
-        [idColumn, ...normal, columns].join(''),
+        [...normal, columns].join(''),
         txtImport,
         importBelongsTo,
         importHasManyTo,
@@ -120,6 +113,7 @@ const send = ({ columnList, tableItem, keyColumnList }) => {
     importHasManyTo && seuqliezeTypeImport.add('HasMany');
     importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
     return modelTemplate({
+        tableName: tableItem.tableName,
         className: (0, helper_1.pascalCase)(tableItem.tableName),
         columns: (0, lodash_1.toString)(columns),
         txtImport: Array.from(txtImport).join(''),
@@ -127,13 +121,13 @@ const send = ({ columnList, tableItem, keyColumnList }) => {
     });
 };
 exports.send = send;
-const modelTemplate = ({ className, columns, txtImport, seuqliezeTypeImport, }) => {
+const modelTemplate = ({ tableName, className, columns, txtImport, seuqliezeTypeImport, }) => {
     const txt = `import { ${seuqliezeTypeImport} } from 'sequelize-typescript';
-import { StaticSnowFlake } from '../utils/flake-id';
+import { EntityBase } from '../base/entity.base';
 import { BaseTable } from '@midwayjs/sequelize';${txtImport}
 
-@BaseTable
-export class ${className} extends Model {
+@BaseTable({ tableName: '${tableName}' })
+export class ${className}Entity extends EntityBase {
 ${columns}
 }
 

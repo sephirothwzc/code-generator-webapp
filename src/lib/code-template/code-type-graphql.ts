@@ -14,26 +14,36 @@ const notColumn = [
   'i18n',
 ];
 
-const findTypeTxt = (p: IQueryColumnOut): string => {
+let hasColJson = '';
+
+const findTypeTxt = (p: IQueryColumnOut): [string, string, Array<string>, Array<string>] => {
   switch (p.dataType) {
     case 'bigint':
     case 'nvarchar':
     case 'varchar':
-      return 'string';
-    case 'timestamp':
+      return [
+        'String',
+        'string',
+        ['@IsString()', `@MaxLength(${p.characterMaximumLength})`],
+        ['IsString', 'MaxLength'],
+      ];
+    case 'timestamp': // GraphQLTimestamp
+      return ['GraphQLTimestamp', 'string', ['@IsDate()'], ['IsDate']];
     case 'int':
+      return ['Int', 'number', ['@IsInt()'], ['IsInt']];
     case 'decimal':
     case 'double':
-      return `number`;
+      return ['Float', 'number', ['@IsNumber()'], ['IsNumber']];
     case 'datetime':
-      return `Date`;
+      return ['GraphQLISODateTime', 'Date', ['@IsDate()'], ['IsDate']];
     case 'boolean':
     case 'tinyint':
-      return 'boolean';
+      return ['Boolean', 'boolean', ['@IsBoolean()'], ['IsBoolean']];
     case 'json':
-      return 'Record<string, any>';
+      hasColJson = `import { GraphQLJSONObject } from 'graphql-type-json';`;
+      return ['GraphQLJSONObject', 'Record<string, any>', ['@IsObject()'], ['IsObject']];
     default:
-      return 'string';
+      return ['String', 'string', ['@IsString()'], ['IsString']];
   }
 };
 
@@ -46,97 +56,89 @@ const findTypeTxt = (p: IQueryColumnOut): string => {
  */
 const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColumnOut[]) => {
   const txtImport = new Set();
-  let importBelongsTo = false;
-  let importHasManyTo = false;
   const columns = keyColumnList
     .map((p) => {
       if (p.tableName === tableItem.tableName) {
-        p.referencedTableName !== p.tableName &&
+        if (p.referencedTableName !== p.tableName) {
+          const fileName = p.referencedTableName.replace(/_/g, '-');
           txtImport.add(
-            `import { ${capitalize(
-              p.referencedTableName
-            )} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`
+            `import { ${capitalize(p.referencedTableName)}Entity } from './${fileName}.entity';`
           );
-        importBelongsTo = true;
+          txtImport.add(
+            `import {  ${capitalize(
+              p.referencedTableName
+            )} } from '../${fileName}/${fileName}.gql';`
+          );
+        }
         let hasManyTemp = '';
         // 自我关联
         if (p.referencedTableName === tableItem.tableName) {
-          importHasManyTo = true;
           hasManyTemp = `
-  @HasMany(() => ${capitalize(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}>;
+  @Field(() => ${capitalize(p.referencedTableName)}, { nullable: true })
+  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}Entity>;
 `;
         }
         // 子表 外键 BelongsTo
         return `
-  @BelongsTo(() => ${capitalize(p.referencedTableName)}, '${p.columnName}')
-  ${capitalize(p.columnName)}Obj: ${capitalize(p.referencedTableName)};
+  @Field(() => ${capitalize(p.referencedTableName)}, { nullable: true })
+  ${capitalize(p.columnName)}Obj: ${capitalize(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
-        p.referencedTableName !== p.tableName &&
+        if (p.referencedTableName !== p.tableName) {
+          const fileName = p.tableName.replace(/_/g, '-');
+          txtImport.add(`import { ${capitalize(p.tableName)}Entity } from './${fileName}.entity';`);
           txtImport.add(
-            `import { ${capitalize(p.tableName)} } from './${p.tableName.replace(
-              /_/g,
-              '-'
-            )}.entity';`
+            `import {  ${capitalize(p.tableName)} } from '../${fileName}/${fileName}.gql';`
           );
-        importHasManyTo = true;
+        }
+
         // 主表 主键 Hasmany
         return `
-  @HasMany(() => ${capitalize(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}>;
+  @Field(() => ${capitalize(p.tableName)}, { nullable: true })
+  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}Entity>;
 `;
       }
     })
     .join(``);
-  return [columns, txtImport, importBelongsTo, importHasManyTo];
+  return [columns, txtImport];
 };
 
 const findColumn = (
   columnList: IQueryColumnOut[],
   tableItem: IQueryTableOut,
   keyColumnList: IQueryKeyColumnOut[]
-) => {
-  let importForeignKeyTo = false;
+): [string, string, string, string] => {
+  const validateImport = new Set<string>();
+  const gqlTypeImport = new Set<string>();
   const normal = columnList
     .filter((p) => !notColumn.includes(p.columnName))
     .map((p) => {
-      const type = findTypeTxt(p);
+      const [gqlType, type, valType, validateImp] = findTypeTxt(p);
+      validateImp.forEach((v) => validateImport.add(v));
+      gqlTypeImport.add(gqlType);
       const propertyName = camelCase(p.columnName);
       const comment = p.columnComment || p.columnName;
 
       const nullable = p.isNullable === 'YES' ? '?' : '';
-
-      const foreignKey = keyColumnList.find(
-        (columnRow) =>
-          columnRow.tableName === tableItem.tableName && columnRow.columnName === p.columnName
-      );
-      // 不需要引入 因为obj 时候会单独处理
-      const foreignKeyTxt = foreignKey
-        ? `
-  @ForeignKey(() => ${capitalize(foreignKey.referencedTableName)})`
-        : '';
-      foreignKeyTxt && (importForeignKeyTo = true);
-
+      const gqlNullable = p.isNullable === 'YES' ? 'nullable: true ' : '';
       return `  /**
    * ${comment}
-   */${foreignKeyTxt}
-   @Column({
-    comment: '${comment}',
+   */${valType.join(`
+   `)}  
+    @Field(() => ${gqlType}, {
+    description: '${comment}',${gqlNullable}
   })
   ${propertyName}${nullable}: ${type};
 `;
     });
-  const [columns, txtImport, importBelongsTo, importHasManyTo] = findForeignKey(
-    tableItem,
-    keyColumnList
-  );
+  const [columns, txtImport] = findForeignKey(tableItem, keyColumnList);
   return [
     [...normal, columns].join(''),
-    txtImport,
-    importBelongsTo,
-    importHasManyTo,
-    importForeignKeyTo,
+    Array.from(txtImport).join(''),
+    Array.from(gqlTypeImport)
+      .filter((p) => !['String', 'Boolean', 'GraphQLJSONObject'].includes(p))
+      .join(', '),
+    Array.from(validateImport).join(','),
   ];
 };
 
@@ -148,24 +150,18 @@ const findColumn = (
  * @returns
  */
 export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
-  const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo] = findColumn(
+  const [columns, txtImport, typeImport, valImport] = findColumn(
     columnList,
     tableItem,
     keyColumnList
   );
 
-  const seuqliezeTypeImport = new Set(['Column', 'Model']);
-  importBelongsTo && seuqliezeTypeImport.add('BelongsTo');
-  importHasManyTo && seuqliezeTypeImport.add('HasMany');
-  importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
-
   return modelTemplate({
     className: capitalize(tableItem.tableName),
     columns: toString(columns),
-    txtImport: Array.from(txtImport as Set<string>).join(''),
-    typeImport: '',
-    seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
-    validatorImport: '',
+    txtImport: txtImport,
+    typeImport: typeImport,
+    validatorImport: valImport,
   });
 };
 
@@ -174,63 +170,38 @@ const modelTemplate = ({
   columns,
   txtImport,
   typeImport,
-  seuqliezeTypeImport,
   validatorImport,
 }: {
   className: string;
   columns: string;
   txtImport: string;
   typeImport: string;
-  seuqliezeTypeImport: string;
   validatorImport: string;
 }): string => {
-  const txt = `import { Field, ID, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}
+  const txt = `import { Field, ID, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
 import { ${validatorImport} } from 'class-validator';
-${seuqliezeTypeImport}
+import {
+  GqlInputTypeBase,
+  GqlObjectTypeBase,
+} from '../../lib/base/gql-type.base';
 
 @ObjectType()
-export default class ${className} {
+export default class ${className} extends GqlObjectTypeBase {
   ${columns}
-  @Field(() => ID)
-  id!: number;
+}
 
-  @Field()
-  name!: string;
+@ObjectType()
+export class ${className}List {
+  @Field(() => [${className}], { nullable: true })
+  list: Array<${className}>;
+
+  @Field(() => Int, { nullable: true })
+  count: number;
 }
 
 @InputType()
-export class ${className}CreateIn {
-  @Field()
-  @IsString()
-  @Length(2, 10)
-  name!: string;
-}
-
-@InputType()
-export class ${className}UpdateIn {
-  @IsNumber()
-  @IsPositive()
-  @Field(type => Int)
-  id!: number;
-
-  @Field()
-  @IsString()
-  @Length(2, 10)
-  name!: string;
-}
-
-@InputType()
-export class UserPaginationInput {
-  @IsNumber()
-  @Min(0)
-  @Field(type => Int)
-  offset?: number;
-
-  @IsNumber()
-  @Min(5)
-  @Max(100)
-  @Field(type => Int)
-  take?: number;
+export class ${className}SaveIn extends GqlInputTypeBase {
+  ${columns}
 }
 
 `;

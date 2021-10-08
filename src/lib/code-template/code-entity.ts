@@ -56,7 +56,7 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
           txtImport.add(
             `import { ${pascalCase(
               p.referencedTableName
-            )} } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`
+            )}Entity } from './${p.referencedTableName.replace(/_/g, '-')}.entity';`
           );
         importBelongsTo = true;
         let hasManyTemp = '';
@@ -64,19 +64,19 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         if (p.referencedTableName === tableItem.tableName) {
           importHasManyTo = true;
           hasManyTemp = `
-  @HasMany(() => ${pascalCase(p.tableName)}, '${p.columnName}')
+  @HasMany(() => ${pascalCase(p.tableName)}Entity, '${p.columnName}')
   ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}>;
 `;
         }
         // 子表 外键 BelongsTo
         return `
-  @BelongsTo(() => ${pascalCase(p.referencedTableName)}, '${p.columnName}')
-  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)};
+  @BelongsTo(() => ${pascalCase(p.referencedTableName)}Entity, '${p.columnName}')
+  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
         p.referencedTableName !== p.tableName &&
           txtImport.add(
-            `import { ${pascalCase(p.tableName)} } from './${p.tableName.replace(
+            `import { ${pascalCase(p.tableName)}Entity } from './${p.tableName.replace(
               /_/g,
               '-'
             )}.entity';`
@@ -84,8 +84,8 @@ ${hasManyTemp}`;
         importHasManyTo = true;
         // 主表 主键 Hasmany
         return `
-  @HasMany(() => ${pascalCase(p.tableName)}, '${p.columnName}')
-  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}>;
+  @HasMany(() => ${pascalCase(p.tableName)}Entity, '${p.columnName}')
+  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}Entity>;
 `;
       }
     })
@@ -115,7 +115,7 @@ const findColumn = (
       // 不需要引入 因为obj 时候会单独处理
       const foreignKeyTxt = foreignKey
         ? `
-  @ForeignKey(() => ${pascalCase(foreignKey.referencedTableName)})`
+  @ForeignKey(() => ${pascalCase(foreignKey.referencedTableName)}Entity)`
         : '';
       foreignKeyTxt && (importForeignKeyTo = true);
 
@@ -132,15 +132,9 @@ const findColumn = (
     tableItem,
     keyColumnList
   );
-  const idColumn = `@Column({
-    primaryKey: true,
-    autoIncrement: false,
-    defaultValue: () => StaticSnowFlake.next(),
-  })
-  id: string;
-`;
+
   return [
-    [idColumn, ...normal, columns].join(''),
+    [...normal, columns].join(''),
     txtImport,
     importBelongsTo,
     importHasManyTo,
@@ -161,6 +155,7 @@ export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
   importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
 
   return modelTemplate({
+    tableName: tableItem.tableName,
     className: pascalCase(tableItem.tableName),
     columns: toString(columns),
     txtImport: Array.from(txtImport as Set<string>).join(''),
@@ -169,22 +164,24 @@ export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
 };
 
 const modelTemplate = ({
+  tableName,
   className,
   columns,
   txtImport,
   seuqliezeTypeImport,
 }: {
+  tableName: string;
   className: string;
   columns: string;
   txtImport: string;
   seuqliezeTypeImport: string;
 }): string => {
   const txt = `import { ${seuqliezeTypeImport} } from 'sequelize-typescript';
-import { StaticSnowFlake } from '../utils/flake-id';
+import { EntityBase } from '../base/entity.base';
 import { BaseTable } from '@midwayjs/sequelize';${txtImport}
 
-@BaseTable
-export class ${className} extends Model {
+@BaseTable({ tableName: '${tableName}' })
+export class ${className}Entity extends EntityBase {
 ${columns}
 }
 

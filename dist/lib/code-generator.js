@@ -87,7 +87,7 @@ const fileSend = async (tables, types, config) => {
             const keyColumnList = await queryKeyColumn(config, p.tableName);
             await bluebird_1.default.each(types, async (x) => {
                 const fileObj = await (0, lodash_1.get)(allFun, x);
-                const codeStr = await fileObj.fun(columnList, p, keyColumnList);
+                const codeStr = await fileObj.fun({ columnList, tableItem: p, keyColumnList });
                 codeStr && (await createFile(fileObj, p.tableName, codeStr, x));
             });
         }));
@@ -109,8 +109,8 @@ const createFile = async (fileObj, tableName, txt, type) => {
     }));
 };
 const success = (fullPath) => {
-    shelljs_1.default.exec(`npx prettier --write ${fullPath}`);
     console.log(chalk_1.default.white.bgGreen.bold(`Done! File FullPath`) + `\t [${fullPath}]`);
+    shelljs_1.default.exec(`npx prettier --write ${fullPath}`);
 };
 const fileWritePromise = (fullPath, txt) => {
     if (!txt) {
@@ -157,7 +157,7 @@ is_Nullable as isNullable
         },
         type: sequelize_1.QueryTypes.SELECT,
     });
-    return result;
+    return result || [];
 };
 const queryKeyColumn = async (config, name) => {
     const sql = `SELECT C.TABLE_SCHEMA as tableSchema,
@@ -188,6 +188,6 @@ const queryKeyColumn = async (config, name) => {
         },
         type: sequelize_1.QueryTypes.SELECT,
     });
-    return result;
+    return result || [];
 };
 //# sourceMappingURL=code-generator.js.map
