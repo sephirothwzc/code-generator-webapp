@@ -55,8 +55,12 @@ const findTypeTxt = (p: IQueryColumnOut): [string, string, Array<string>, Array<
  * @param {*} sequelizeType
  * @param {*} columnRow
  */
-const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColumnOut[]) => {
-  const txtImport = new Set();
+const findForeignKey = (
+  tableItem: IQueryTableOut,
+  keyColumnList: IQueryKeyColumnOut[],
+  inputCol = ''
+): [string, Set<string>] => {
+  const txtImport = new Set<string>();
   const columns = keyColumnList
     .map((p) => {
       if (p.tableName === tableItem.tableName) {
@@ -68,22 +72,22 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
             )}Entity } from '../../lib/model/${fileName}.entity';`
           );
           txtImport.add(
-            `import {  ${pascalCase(
+            `import { ${pascalCase(
               p.referencedTableName
-            )} } from '../${fileName}/${fileName}.gql';`
+            )}${inputCol} } from '../${fileName}/${fileName}.gql';`
           );
         }
         let hasManyTemp = '';
         // 自我关联
         if (p.referencedTableName === tableItem.tableName) {
           hasManyTemp = `
-  @Field(() => ${pascalCase(p.referencedTableName)}, { nullable: true })
+  @Field(() => [${pascalCase(p.referencedTableName)}${inputCol}], { nullable: true })
   ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}Entity>;
 `;
         }
         // 子表 外键 BelongsTo
         return `
-  @Field(() => ${pascalCase(p.referencedTableName)}, { nullable: true })
+  @Field(() => ${pascalCase(p.referencedTableName)}${inputCol}, { nullable: true })
   ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
@@ -93,13 +97,15 @@ ${hasManyTemp}`;
             `import { ${pascalCase(p.tableName)}Entity } from '../../lib/model/${fileName}.entity';`
           );
           txtImport.add(
-            `import {  ${pascalCase(p.tableName)} } from '../${fileName}/${fileName}.gql';`
+            `import { ${pascalCase(
+              p.tableName
+            )}${inputCol} } from '../${fileName}/${fileName}.gql';`
           );
         }
 
         // 主表 主键 Hasmany
         return `
-  @Field(() => ${pascalCase(p.tableName)}, { nullable: true })
+  @Field(() => [${pascalCase(p.tableName)}${inputCol}], { nullable: true })
   ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}Entity>;
 `;
       }
@@ -112,7 +118,7 @@ const findColumn = (
   columnList: IQueryColumnOut[],
   tableItem: IQueryTableOut,
   keyColumnList: IQueryKeyColumnOut[]
-): [string, string, string, string] => {
+): [string, string, string, string, string] => {
   const validateImport = new Set<string>();
   const gqlTypeImport = new Set<string>();
   const normal = columnList
@@ -138,8 +144,11 @@ const findColumn = (
 `;
     });
   const [columns, txtImport] = findForeignKey(tableItem, keyColumnList);
+  const [inputColumns, inputTxtImport] = findForeignKey(tableItem, keyColumnList, 'SaveIn');
+  inputTxtImport.forEach((p) => txtImport.add(p));
   return [
     [...normal, columns].join(''),
+    [...normal, inputColumns].join(''),
     Array.from(txtImport).join(''),
     Array.from(gqlTypeImport)
       .filter((p) => !['String', 'Boolean', 'GraphQLJSONObject', 'Int'].includes(p))
@@ -156,7 +165,7 @@ const findColumn = (
  * @returns
  */
 export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
-  const [columns, txtImport, typeImport, valImport] = findColumn(
+  const [columns, inputColumns, txtImport, typeImport, valImport] = findColumn(
     columnList,
     tableItem,
     keyColumnList
@@ -164,6 +173,7 @@ export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
 
   return modelTemplate({
     className: pascalCase(tableItem.tableName),
+    inputColumns,
     columns: toString(columns),
     txtImport: txtImport,
     typeImport: typeImport,
@@ -174,12 +184,14 @@ export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
 const modelTemplate = ({
   className,
   columns,
+  inputColumns,
   txtImport,
   typeImport,
   validatorImport,
 }: {
   className: string;
   columns: string;
+  inputColumns: string;
   txtImport: string;
   typeImport: string;
   validatorImport: string;
@@ -207,7 +219,7 @@ export class ${className}List {
 
 @InputType()
 export class ${className}SaveIn extends GqlInputTypeBase {
-  ${columns}
+  ${inputColumns}
 }
 
 `;
