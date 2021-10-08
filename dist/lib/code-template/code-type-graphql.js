@@ -98,8 +98,9 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         const gqlNullable = p.isNullable === 'YES' ? 'nullable: true ' : '';
         return `  /**
    * ${comment}
-   */${valType.join(`
-   `)}  
+   */
+  ${valType.join(`
+   `)}
     @Field(() => ${gqlType}, {
     description: '${comment}',${gqlNullable}
   })
@@ -111,7 +112,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         [...normal, columns].join(''),
         Array.from(txtImport).join(''),
         Array.from(gqlTypeImport)
-            .filter((p) => !['String', 'Boolean', 'GraphQLJSONObject'].includes(p))
+            .filter((p) => !['String', 'Boolean', 'GraphQLJSONObject', 'Int'].includes(p))
             .join(', '),
         Array.from(validateImport).join(','),
     ];
