@@ -20,58 +20,58 @@ let AppOrderEntity = class AppOrderEntity extends entity_base_1.EntityBase {
 __decorate([
     (0, sequelize_typescript_1.ForeignKey)(() => app_user_entity_1.AppUserEntity),
     (0, sequelize_typescript_1.Column)({
-        comment: '用户id',
+        comment: "用户id",
     }),
     __metadata("design:type", String)
 ], AppOrderEntity.prototype, "appUserId", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: '业务编码权限用',
+        comment: "业务编码权限用",
     }),
     __metadata("design:type", String)
 ], AppOrderEntity.prototype, "businessCode", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: '消息队列id',
+        comment: "消息队列id",
     }),
     __metadata("design:type", String)
 ], AppOrderEntity.prototype, "msgId", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: '订单金额分',
+        comment: "订单金额分",
     }),
     __metadata("design:type", Number)
 ], AppOrderEntity.prototype, "orderAmount", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: '三方支付订单id',
+        comment: "三方支付订单id",
     }),
     __metadata("design:type", String)
 ], AppOrderEntity.prototype, "otherId", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: '备注',
+        comment: "备注",
     }),
     __metadata("design:type", String)
 ], AppOrderEntity.prototype, "remark", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: '订单状态',
+        comment: "订单状态",
     }),
     __metadata("design:type", String)
 ], AppOrderEntity.prototype, "status", void 0);
 __decorate([
     (0, sequelize_typescript_1.Column)({
-        comment: 'BaseTable.version',
+        comment: "BaseTable.version",
     }),
     __metadata("design:type", Number)
 ], AppOrderEntity.prototype, "version", void 0);
 __decorate([
-    (0, sequelize_typescript_1.BelongsTo)(() => app_user_entity_1.AppUserEntity, 'app_user_id'),
+    (0, sequelize_typescript_1.BelongsTo)(() => app_user_entity_1.AppUserEntity, "app_user_id"),
     __metadata("design:type", typeof (_a = typeof app_user_entity_1.AppUserEntity !== "undefined" && app_user_entity_1.AppUserEntity) === "function" ? _a : Object)
 ], AppOrderEntity.prototype, "AppUserIdObj", void 0);
 AppOrderEntity = __decorate([
-    (0, sequelize_1.BaseTable)({ tableName: 'app_order' })
+    (0, sequelize_1.BaseTable)({ tableName: "app_order" })
 ], AppOrderEntity);
 exports.AppOrderEntity = AppOrderEntity;
 //# sourceMappingURL=app-order.entity.js.map

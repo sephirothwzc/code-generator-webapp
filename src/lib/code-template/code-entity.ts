@@ -149,7 +149,7 @@ export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
     keyColumnList
   );
 
-  const seuqliezeTypeImport = new Set(['Column', 'Model']);
+  const seuqliezeTypeImport = new Set(['Column']);
   importBelongsTo && seuqliezeTypeImport.add('BelongsTo');
   importHasManyTo && seuqliezeTypeImport.add('HasMany');
   importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');

@@ -21,7 +21,7 @@ const getConn = (config) => {
     !sequelize && (sequelize = new sequelize_typescript_1.Sequelize(config));
     return sequelize;
 };
-const codeTypeArray = ['entity', 'graphql', 'schema', 'resolver', 'service', 'hook'];
+const codeTypeArray = ['entity', 'typeGraphql', 'graphql', 'schema', 'resolver', 'service', 'hook'];
 const allFun = {
     entity: {
         fun: code_entity_1.send,
@@ -35,6 +35,7 @@ const allFun = {
             const fileName = tableName.replace(/_/g, '-');
             return `./src/graphql/${fileName}`;
         },
+        suffix: 'gql',
     },
     service: {
         fun: code_service_1.send,
@@ -105,7 +106,7 @@ const createFile = async (fileObj, tableName, txt, type) => {
     const filePath = (0, lodash_1.isString)(objath) ? objath : objath(tableName);
     console.log(filePath);
     shelljs_1.default.mkdir('-p', filePath);
-    const fullPath = `${filePath}/${fileName}.${fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix}.${fileObj.extension || 'ts'}`.replace(/\.\./g, '.');
+    const fullPath = `${filePath}/${fileName}.${(fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix) || ''}.${fileObj.extension || 'ts'}`.replace(/\.\./g, '.');
     await ((_a = fileWritePromise(fullPath, txt)) === null || _a === void 0 ? void 0 : _a.then(() => {
         success(fullPath);
     }).catch((error) => {

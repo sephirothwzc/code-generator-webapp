@@ -102,7 +102,7 @@ const getConn = (config: ISequelizeConfig): Sequelize => {
 /**
  * 生成类型
  */
-const codeTypeArray = ['entity', 'graphql', 'schema', 'resolver', 'service', 'hook'];
+const codeTypeArray = ['entity', 'typeGraphql', 'graphql', 'schema', 'resolver', 'service', 'hook'];
 
 export interface IFileObject {
   fun: ({
@@ -150,6 +150,7 @@ const allFun = {
       const fileName = tableName.replace(/_/g, '-');
       return `./src/graphql/${fileName}`;
     },
+    suffix: 'gql',
   },
   service: {
     fun: serviceSend,
@@ -263,7 +264,7 @@ const createFile = async (
   const filePath = isString(objath) ? objath : objath(tableName);
   console.log(filePath);
   shell.mkdir('-p', filePath);
-  const fullPath = `${filePath}/${fileName}.${fileObj?.suffix}.${
+  const fullPath = `${filePath}/${fileName}.${fileObj?.suffix || ''}.${
     fileObj.extension || 'ts'
   }`.replace(/\.\./g, '.');
 

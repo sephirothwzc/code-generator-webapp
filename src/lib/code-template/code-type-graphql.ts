@@ -1,5 +1,6 @@
 import { IQueryColumnOut, IQueryKeyColumnOut, IQueryTableOut, ISend } from '../code-generator';
-import { capitalize, camelCase, toString } from 'lodash';
+import { camelCase, toString } from 'lodash';
+import { pascalCase } from '../utils/helper';
 
 const notColumn = [
   'id',
@@ -62,10 +63,10 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         if (p.referencedTableName !== p.tableName) {
           const fileName = p.referencedTableName.replace(/_/g, '-');
           txtImport.add(
-            `import { ${capitalize(p.referencedTableName)}Entity } from './${fileName}.entity';`
+            `import { ${pascalCase(p.referencedTableName)}Entity } from './${fileName}.entity';`
           );
           txtImport.add(
-            `import {  ${capitalize(
+            `import {  ${pascalCase(
               p.referencedTableName
             )} } from '../${fileName}/${fileName}.gql';`
           );
@@ -74,28 +75,28 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         // 自我关联
         if (p.referencedTableName === tableItem.tableName) {
           hasManyTemp = `
-  @Field(() => ${capitalize(p.referencedTableName)}, { nullable: true })
-  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}Entity>;
+  @Field(() => ${pascalCase(p.referencedTableName)}, { nullable: true })
+  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}Entity>;
 `;
         }
         // 子表 外键 BelongsTo
         return `
-  @Field(() => ${capitalize(p.referencedTableName)}, { nullable: true })
-  ${capitalize(p.columnName)}Obj: ${capitalize(p.referencedTableName)}Entity;
+  @Field(() => ${pascalCase(p.referencedTableName)}, { nullable: true })
+  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
         if (p.referencedTableName !== p.tableName) {
           const fileName = p.tableName.replace(/_/g, '-');
-          txtImport.add(`import { ${capitalize(p.tableName)}Entity } from './${fileName}.entity';`);
+          txtImport.add(`import { ${pascalCase(p.tableName)}Entity } from './${fileName}.entity';`);
           txtImport.add(
-            `import {  ${capitalize(p.tableName)} } from '../${fileName}/${fileName}.gql';`
+            `import {  ${pascalCase(p.tableName)} } from '../${fileName}/${fileName}.gql';`
           );
         }
 
         // 主表 主键 Hasmany
         return `
-  @Field(() => ${capitalize(p.tableName)}, { nullable: true })
-  ${camelCase(p.tableName)}${capitalize(p.columnName)}: Array<${capitalize(p.tableName)}Entity>;
+  @Field(() => ${pascalCase(p.tableName)}, { nullable: true })
+  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}Entity>;
 `;
       }
     })
@@ -157,7 +158,7 @@ export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
   );
 
   return modelTemplate({
-    className: capitalize(tableItem.tableName),
+    className: pascalCase(tableItem.tableName),
     columns: toString(columns),
     txtImport: txtImport,
     typeImport: typeImport,
@@ -178,7 +179,7 @@ const modelTemplate = ({
   typeImport: string;
   validatorImport: string;
 }): string => {
-  const txt = `import { Field, ID, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
+  const txt = `import { Field, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
 import { ${validatorImport} } from 'class-validator';
 import {
   GqlInputTypeBase,
