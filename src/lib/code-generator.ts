@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { get } from 'lodash';
+import { get, isString } from 'lodash';
 import shell from 'shelljs';
 import { Sequelize } from 'sequelize-typescript';
 import { QueryTypes } from 'sequelize';
@@ -114,7 +114,7 @@ export interface IFileObject {
     tableItem: IQueryTableOut;
     keyColumnList: Array<IQueryKeyColumnOut>;
   }) => Promise<string>;
-  path: string;
+  path: string | ((tableName: string) => string);
   /**
    * 后缀
    */
@@ -146,7 +146,10 @@ const allFun = {
   },
   typeGraphql: {
     fun: typeGraphqlSend,
-    path: './src/graphql',
+    path: (tableName: string) => {
+      const fileName = tableName.replace(/_/g, '-');
+      return `./src/graphql/${fileName}`;
+    },
   },
   service: {
     fun: serviceSend,
@@ -256,7 +259,8 @@ const createFile = async (
   // 文件名
   const fileName = tableName.replace(/_/g, '-');
 
-  const filePath = get(fileObj, 'path', `./out/${type}`);
+  const objath = get(fileObj, 'path', `./out/${type}`);
+  const filePath = isString(objath) ? objath : objath(tableName);
   console.log(filePath);
   shell.mkdir('-p', filePath);
   const fullPath = `${filePath}/${fileName}.${fileObj?.suffix}.${

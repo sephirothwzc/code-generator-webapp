@@ -31,7 +31,10 @@ const allFun = {
     },
     typeGraphql: {
         fun: code_type_graphql_1.send,
-        path: './src/graphql',
+        path: (tableName) => {
+            const fileName = tableName.replace(/_/g, '-');
+            return `./src/graphql/${fileName}`;
+        },
     },
     service: {
         fun: code_service_1.send,
@@ -98,7 +101,8 @@ const createFile = async (fileObj, tableName, txt, type) => {
         return;
     }
     const fileName = tableName.replace(/_/g, '-');
-    const filePath = (0, lodash_1.get)(fileObj, 'path', `./out/${type}`);
+    const objath = (0, lodash_1.get)(fileObj, 'path', `./out/${type}`);
+    const filePath = (0, lodash_1.isString)(objath) ? objath : objath(tableName);
     console.log(filePath);
     shelljs_1.default.mkdir('-p', filePath);
     const fullPath = `${filePath}/${fileName}.${fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix}.${fileObj.extension || 'ts'}`.replace(/\.\./g, '.');
