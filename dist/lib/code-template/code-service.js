@@ -5,12 +5,12 @@ const helper_1 = require("../utils/helper");
 const modelTemplate = ({ className, modelFileName, }) => {
     return `import { Provide } from '@midwayjs/decorator';
 import ServiceGenericBase from '../lib/base/service-generic.base';
-import { ${className} } from '../lib/model/${modelFileName}.entity';
+import { ${className}Entity } from '../lib/model/${modelFileName}.entity';
 
 @Provide()
-export class ${className}Service extends ServiceGenericBase<${className}> {
+export class ${className}Service extends ServiceGenericBase<${className}Entity> {
   get Entity() {
-    return ${className};
+    return ${className}Entity;
   }
 }
 `;
