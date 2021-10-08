@@ -63,7 +63,9 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         if (p.referencedTableName !== p.tableName) {
           const fileName = p.referencedTableName.replace(/_/g, '-');
           txtImport.add(
-            `import { ${pascalCase(p.referencedTableName)}Entity } from './${fileName}.entity';`
+            `import { ${pascalCase(
+              p.referencedTableName
+            )}Entity } from '../../lib/model/${fileName}.entity';`
           );
           txtImport.add(
             `import {  ${pascalCase(
@@ -87,7 +89,9 @@ ${hasManyTemp}`;
       } else {
         if (p.referencedTableName !== p.tableName) {
           const fileName = p.tableName.replace(/_/g, '-');
-          txtImport.add(`import { ${pascalCase(p.tableName)}Entity } from './${fileName}.entity';`);
+          txtImport.add(
+            `import { ${pascalCase(p.tableName)}Entity } from '../../lib/model/${fileName}.entity';`
+          );
           txtImport.add(
             `import {  ${pascalCase(p.tableName)} } from '../${fileName}/${fileName}.gql';`
           );
@@ -179,7 +183,7 @@ const modelTemplate = ({
   typeImport: string;
   validatorImport: string;
 }): string => {
-  const txt = `import { Field, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
+  const txt = `import { Field, ObjectType, InputType, Int, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
 import { ${validatorImport} } from 'class-validator';
 import {
   GqlInputTypeBase,
@@ -187,7 +191,7 @@ import {
 } from '../../lib/base/gql-type.base';
 
 @ObjectType()
-export default class ${className} extends GqlObjectTypeBase {
+export class ${className} extends GqlObjectTypeBase {
   ${columns}
 }
 

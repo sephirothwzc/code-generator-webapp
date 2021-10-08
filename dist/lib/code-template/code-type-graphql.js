@@ -53,7 +53,7 @@ const findForeignKey = (tableItem, keyColumnList) => {
         if (p.tableName === tableItem.tableName) {
             if (p.referencedTableName !== p.tableName) {
                 const fileName = p.referencedTableName.replace(/_/g, '-');
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from './${fileName}.entity';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from '../../lib/model/${fileName}.entity';`);
                 txtImport.add(`import {  ${(0, helper_1.pascalCase)(p.referencedTableName)} } from '../${fileName}/${fileName}.gql';`);
             }
             let hasManyTemp = '';
@@ -71,7 +71,7 @@ ${hasManyTemp}`;
         else {
             if (p.referencedTableName !== p.tableName) {
                 const fileName = p.tableName.replace(/_/g, '-');
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from './${fileName}.entity';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from '../../lib/model/${fileName}.entity';`);
                 txtImport.add(`import {  ${(0, helper_1.pascalCase)(p.tableName)} } from '../${fileName}/${fileName}.gql';`);
             }
             return `
@@ -128,7 +128,7 @@ const send = ({ columnList, tableItem, keyColumnList }) => {
 };
 exports.send = send;
 const modelTemplate = ({ className, columns, txtImport, typeImport, validatorImport, }) => {
-    const txt = `import { Field, ObjectType, InputType, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
+    const txt = `import { Field, ObjectType, InputType, Int, ${typeImport} } from 'type-graphql';${txtImport}${hasColJson}
 import { ${validatorImport} } from 'class-validator';
 import {
   GqlInputTypeBase,
@@ -136,7 +136,7 @@ import {
 } from '../../lib/base/gql-type.base';
 
 @ObjectType()
-export default class ${className} extends GqlObjectTypeBase {
+export class ${className} extends GqlObjectTypeBase {
   ${columns}
 }
 
