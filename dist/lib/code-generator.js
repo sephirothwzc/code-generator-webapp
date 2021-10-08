@@ -14,6 +14,7 @@ const code_entity_1 = require("./code-template/code-entity");
 const code_type_graphql_1 = require("./code-template/code-type-graphql");
 const code_service_1 = require("./code-template/code-service");
 const code_operation_1 = require("./code-template/code-operation");
+const code_resolver_1 = require("./code-template/code-resolver");
 const fs_1 = __importDefault(require("fs"));
 const util_1 = require("util");
 const bluebird_1 = __importDefault(require("bluebird"));
@@ -51,6 +52,11 @@ const allFun = {
         },
         extension: 'gql',
         fileName: 'operation',
+    },
+    resolver: {
+        fun: code_resolver_1.send,
+        path: `./src/resolver`,
+        suffix: 'resolver',
     },
 };
 const envConfig = (env) => {

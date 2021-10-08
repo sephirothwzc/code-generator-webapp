@@ -8,6 +8,7 @@ import { send as entitySend } from './code-template/code-entity';
 import { send as typeGraphqlSend } from './code-template/code-type-graphql';
 import { send as serviceSend } from './code-template/code-service';
 import { send as operationSend } from './code-template/code-operation';
+import { send as resolverSend } from './code-template/code-resolver';
 import fs from 'fs';
 import { promisify } from 'util';
 import bluebird from 'bluebird';
@@ -170,6 +171,11 @@ const allFun = {
     },
     extension: 'gql',
     fileName: 'operation',
+  },
+  resolver: {
+    fun: resolverSend,
+    path: `./src/resolver`,
+    suffix: 'resolver',
   },
 };
 
