@@ -13,6 +13,7 @@ const sequelize_1 = require("sequelize");
 const code_entity_1 = require("./code-template/code-entity");
 const code_type_graphql_1 = require("./code-template/code-type-graphql");
 const code_service_1 = require("./code-template/code-service");
+const code_operation_1 = require("./code-template/code-operation");
 const fs_1 = __importDefault(require("fs"));
 const util_1 = require("util");
 const bluebird_1 = __importDefault(require("bluebird"));
@@ -21,7 +22,7 @@ const getConn = (config) => {
     !sequelize && (sequelize = new sequelize_typescript_1.Sequelize(config));
     return sequelize;
 };
-const codeTypeArray = ['entity', 'typeGraphql', 'graphql', 'schema', 'resolver', 'service', 'hook'];
+const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'hook'];
 const allFun = {
     entity: {
         fun: code_entity_1.send,
@@ -41,6 +42,15 @@ const allFun = {
         fun: code_service_1.send,
         path: `./src/service`,
         suffix: 'service',
+    },
+    operation: {
+        fun: code_operation_1.send,
+        path: (tableName) => {
+            const fileName = tableName.replace(/_/g, '-');
+            return `./src/graphql/${fileName}`;
+        },
+        extension: 'gql',
+        fileName: 'operation',
     },
 };
 const envConfig = (env) => {
@@ -106,11 +116,15 @@ const createFile = async (fileObj, tableName, txt, type) => {
     const filePath = (0, lodash_1.isString)(objath) ? objath : objath(tableName);
     console.log(filePath);
     shelljs_1.default.mkdir('-p', filePath);
-    const fullPath = `${filePath}/${fileName}.${(fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix) || ''}.${fileObj.extension || 'ts'}`.replace(/\.\./g, '.');
+    const lastFileName = (0, lodash_1.get)(fileObj, 'fileName', fileName);
+    const overFileName = (0, lodash_1.isString)(lastFileName) ? lastFileName : lastFileName(tableName);
+    const overSuffix = (fileObj === null || fileObj === void 0 ? void 0 : fileObj.suffix) || '';
+    const overExtension = fileObj.extension || 'ts';
+    const fullPath = `${filePath}/${overFileName}.${overSuffix}.${overExtension}`.replace(/\.\./g, '.');
     await ((_a = fileWritePromise(fullPath, txt)) === null || _a === void 0 ? void 0 : _a.then(() => {
         success(fullPath);
     }).catch((error) => {
-        console.error(chalk_1.default.white.bgRed.bold(`Error: `) + `\t [${fileName}]${error}!`);
+        console.error(chalk_1.default.white.bgRed.bold(`Error: `) + `\t [${overFileName}]${error}!`);
     }));
 };
 const success = (fullPath) => {

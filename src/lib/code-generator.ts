@@ -7,6 +7,7 @@ import { QueryTypes } from 'sequelize';
 import { send as entitySend } from './code-template/code-entity';
 import { send as typeGraphqlSend } from './code-template/code-type-graphql';
 import { send as serviceSend } from './code-template/code-service';
+import { send as operationSend } from './code-template/code-operation';
 import fs from 'fs';
 import { promisify } from 'util';
 import bluebird from 'bluebird';
@@ -85,24 +86,6 @@ export interface IQueryColumnOut {
   characterMaximumLength: string;
   isNullable: string;
 }
-// #endregion
-
-let sequelize: Sequelize;
-
-/**
- * 获取链接
- * @param config
- * @returns
- */
-const getConn = (config: ISequelizeConfig): Sequelize => {
-  !sequelize && (sequelize = new Sequelize(config));
-  return sequelize;
-};
-
-/**
- * 生成类型
- */
-const codeTypeArray = ['entity', 'typeGraphql', 'graphql', 'schema', 'resolver', 'service', 'hook'];
 
 export interface IFileObject {
   fun: ({
@@ -123,7 +106,29 @@ export interface IFileObject {
    * 扩展名
    */
   extension?: string;
+  /**
+   * 文件名 默认 表名tableName.replace(/_/g, '-')
+   */
+  fileName?: string | ((tableName: string) => string);
 }
+// #endregion
+
+let sequelize: Sequelize;
+
+/**
+ * 获取链接
+ * @param config
+ * @returns
+ */
+const getConn = (config: ISequelizeConfig): Sequelize => {
+  !sequelize && (sequelize = new Sequelize(config));
+  return sequelize;
+};
+
+/**
+ * 生成类型
+ */
+const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'hook'];
 
 /**
  * 生成对象
@@ -156,6 +161,15 @@ const allFun = {
     fun: serviceSend,
     path: `./src/service`,
     suffix: 'service',
+  },
+  operation: {
+    fun: operationSend,
+    path: (tableName: string) => {
+      const fileName = tableName.replace(/_/g, '-');
+      return `./src/graphql/${fileName}`;
+    },
+    extension: 'gql',
+    fileName: 'operation',
   },
 };
 
@@ -264,16 +278,25 @@ const createFile = async (
   const filePath = isString(objath) ? objath : objath(tableName);
   console.log(filePath);
   shell.mkdir('-p', filePath);
-  const fullPath = `${filePath}/${fileName}.${fileObj?.suffix || ''}.${
-    fileObj.extension || 'ts'
-  }`.replace(/\.\./g, '.');
+  // 最终文件名处理
+  const lastFileName = get(fileObj, 'fileName', fileName);
+  const overFileName = isString(lastFileName) ? lastFileName : lastFileName(tableName);
+  // 文件属性后缀
+  const overSuffix = fileObj?.suffix || '';
+  // 后缀
+  const overExtension = fileObj.extension || 'ts';
+  // 完整路径
+  const fullPath = `${filePath}/${overFileName}.${overSuffix}.${overExtension}`.replace(
+    /\.\./g,
+    '.'
+  );
 
   await fileWritePromise(fullPath, txt)
     ?.then(() => {
       success(fullPath);
     })
     .catch((error) => {
-      console.error(chalk.white.bgRed.bold(`Error: `) + `\t [${fileName}]${error}!`);
+      console.error(chalk.white.bgRed.bold(`Error: `) + `\t [${overFileName}]${error}!`);
     });
 };
 
