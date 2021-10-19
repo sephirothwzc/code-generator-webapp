@@ -52,7 +52,7 @@ const findForeignKey = (tableItem, keyColumnList) => {
                 importHasManyTo = true;
                 hasManyTemp = `
   @HasMany(() => ${(0, helper_1.pascalCase)(p.tableName)}Entity, '${p.columnName}')
-  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}: Array<${(0, helper_1.pascalCase)(p.tableName)}>;
+  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}: Array<${(0, helper_1.pascalCase)(p.tableName)}Entity>;
 `;
             }
             return `

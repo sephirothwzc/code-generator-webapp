@@ -65,7 +65,7 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
           importHasManyTo = true;
           hasManyTemp = `
   @HasMany(() => ${pascalCase(p.tableName)}Entity, '${p.columnName}')
-  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}>;
+  ${camelCase(p.tableName)}${pascalCase(p.columnName)}: Array<${pascalCase(p.tableName)}Entity>;
 `;
         }
         // 子表 外键 BelongsTo
