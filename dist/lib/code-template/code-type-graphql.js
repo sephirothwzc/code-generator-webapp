@@ -51,9 +51,9 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
     const columns = keyColumnList
         .map((p) => {
         if (p.tableName === tableItem.tableName) {
+            const fileName = p.referencedTableName.replace(/_/g, '-');
+            txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from '../../lib/model/${fileName}.entity';`);
             if (p.referencedTableName !== p.tableName) {
-                const fileName = p.referencedTableName.replace(/_/g, '-');
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from '../../lib/model/${fileName}.entity';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol} } from '../${fileName}/${fileName}.gql';`);
             }
             let hasManyTemp = '';
@@ -121,6 +121,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
     ];
 };
 const send = ({ columnList, tableItem, keyColumnList }) => {
+    hasColJson = '';
     const [columns, inputColumns, txtImport, typeImport, valImport] = findColumn(columnList, tableItem, keyColumnList);
     return modelTemplate({
         className: (0, helper_1.pascalCase)(tableItem.tableName),
