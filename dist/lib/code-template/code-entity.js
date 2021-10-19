@@ -57,7 +57,7 @@ const findForeignKey = (tableItem, keyColumnList) => {
             }
             return `
   @BelongsTo(() => ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity, '${p.columnName}')
-  ${(0, helper_1.pascalCase)(p.columnName)}Obj: ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity;
+  ${(0, lodash_1.camelCase)(p.columnName)}Obj: ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
         }
         else {

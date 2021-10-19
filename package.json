@@ -1,6 +1,6 @@
 {
   "name": "code-generator-midway2",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "midway2.0 生成器",
   "main": "index.js",
   "scripts": {

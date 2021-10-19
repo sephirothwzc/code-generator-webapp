@@ -71,7 +71,7 @@ const findForeignKey = (tableItem: IQueryTableOut, keyColumnList: IQueryKeyColum
         // 子表 外键 BelongsTo
         return `
   @BelongsTo(() => ${pascalCase(p.referencedTableName)}Entity, '${p.columnName}')
-  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
+  ${camelCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
         p.referencedTableName !== p.tableName &&
