@@ -97,6 +97,16 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
   ${propertyName}${nullable}: ${type};
 `;
     });
+    const constTxt = columnList
+        .filter((p) => !notColumn.includes(p.columnName))
+        .map((p) => {
+        return `
+  /**
+   * ${p.columnComment}
+   */
+  public static readonly ${(0, lodash_1.toUpper)(p.columnName)} = '${(0, lodash_1.camelCase)(p.columnName)}';
+`;
+    });
     const [columns, txtImport, importBelongsTo, importHasManyTo] = findForeignKey(tableItem, keyColumnList);
     return [
         [...normal, columns].join(''),
@@ -104,10 +114,11 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         importBelongsTo,
         importHasManyTo,
         importForeignKeyTo,
+        constTxt.join(''),
     ];
 };
 const send = ({ columnList, tableItem, keyColumnList }) => {
-    const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo] = findColumn(columnList, tableItem, keyColumnList);
+    const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo, constTxt] = findColumn(columnList, tableItem, keyColumnList);
     const seuqliezeTypeImport = new Set(['Column']);
     importBelongsTo && seuqliezeTypeImport.add('BelongsTo');
     importHasManyTo && seuqliezeTypeImport.add('HasMany');
@@ -118,12 +129,13 @@ const send = ({ columnList, tableItem, keyColumnList }) => {
         columns: (0, lodash_1.toString)(columns),
         txtImport: Array.from(txtImport).join(''),
         seuqliezeTypeImport: Array.from(seuqliezeTypeImport).join(','),
+        constTxt: constTxt,
     });
 };
 exports.send = send;
-const modelTemplate = ({ tableName, className, columns, txtImport, seuqliezeTypeImport, }) => {
+const modelTemplate = ({ tableName, className, columns, txtImport, seuqliezeTypeImport, constTxt, }) => {
     const txt = `import { ${seuqliezeTypeImport} } from 'sequelize-typescript';
-import { EntityBase } from '../base/entity.base';
+import { EntityBase, ENTITY_BASE } from '../base/entity.base';
 import { BaseTable } from '@midwayjs/sequelize';${txtImport}
 
 @BaseTable({ tableName: '${tableName}' })
@@ -131,6 +143,10 @@ export class ${className}Entity extends EntityBase {
 ${columns}
 }
 
+// eslint-disable-next-line @typescript-eslint/class-name-casing
+export class ${(0, lodash_1.toUpper)(tableName)} extends ENTITY_BASE {
+${constTxt}
+}
 `;
     return txt;
 };

@@ -23,7 +23,7 @@ const getConn = (config) => {
     !sequelize && (sequelize = new sequelize_typescript_1.Sequelize(config));
     return sequelize;
 };
-const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'hook'];
+const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service'];
 const allFun = {
     entity: {
         fun: code_entity_1.send,

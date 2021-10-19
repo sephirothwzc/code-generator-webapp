@@ -129,7 +129,7 @@ const getConn = (config: ISequelizeConfig): Sequelize => {
 /**
  * 生成类型
  */
-const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'hook'];
+const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service'];
 
 /**
  * 生成对象
