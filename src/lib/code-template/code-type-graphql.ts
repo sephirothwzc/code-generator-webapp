@@ -88,7 +88,7 @@ const findForeignKey = (
         // 子表 外键 BelongsTo
         return `
   @Field(() => ${pascalCase(p.referencedTableName)}${inputCol}, { nullable: true })
-  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
+  ${camelCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
         if (p.referencedTableName !== p.tableName) {

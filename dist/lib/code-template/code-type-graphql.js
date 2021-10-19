@@ -65,7 +65,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
             }
             return `
   @Field(() => ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol}, { nullable: true })
-  ${(0, helper_1.pascalCase)(p.columnName)}Obj: ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity;
+  ${(0, lodash_1.camelCase)(p.columnName)}Obj: ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
         }
         else {
