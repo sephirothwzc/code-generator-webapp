@@ -12,7 +12,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
             if (p.referencedTableName !== p.tableName) {
                 const fileName = p.referencedTableName.replace(/_/g, '-');
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from '../lib/model/${fileName}.entity';`);
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol} } from '../${fileName}/${fileName}.gql';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol} } from '../graphql/${fileName}/${fileName}.gql';`);
             }
             let hasManyTemp = '';
             if (p.referencedTableName === tableItem.tableName) {
@@ -25,9 +25,9 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${(0, lodash_1.camelCase)(p.tableName)}Service.findAll<${(0, helper_1.pascalCase)(p.tableName)}Entity>({ where: { 
+    return this.${(0, lodash_1.camelCase)(p.tableName)}Service.findAll({ where: { 
             ${(0, lodash_1.camelCase)(p.columnName)}: root.get('id') 
-          });
+          }});
   }
   `;
             }
@@ -55,7 +55,7 @@ ${hasManyTemp}`;
             if (p.referencedTableName !== p.tableName) {
                 const fileName = p.tableName.replace(/_/g, '-');
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from '../lib/model/${fileName}.entity';`);
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}${inputCol} } from '../${fileName}/${fileName}.gql';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}${inputCol} } from '../graphql/${fileName}/${fileName}.gql';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Service } from '../service/${fileName}.service';`);
                 injectService.add(`  @Inject()
   ${(0, lodash_1.camelCase)(p.tableName)}Service: ${(0, helper_1.pascalCase)(p.tableName)}Service;
@@ -70,9 +70,9 @@ ${hasManyTemp}`;
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${(0, lodash_1.camelCase)(p.tableName)}Service.findAll<${(0, helper_1.pascalCase)(p.tableName)}Entity>({ where: { 
+    return this.${(0, lodash_1.camelCase)(p.tableName)}Service.findAll({ where: { 
             ${(0, lodash_1.camelCase)(p.columnName)}: root.get('id') 
-          });
+          }});
   }
   `;
         }

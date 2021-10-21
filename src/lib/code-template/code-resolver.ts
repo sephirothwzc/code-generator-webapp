@@ -29,7 +29,7 @@ const findForeignKey = (
           txtImport.add(
             `import { ${pascalCase(
               p.referencedTableName
-            )}${inputCol} } from '../${fileName}/${fileName}.gql';`
+            )}${inputCol} } from '../graphql/${fileName}/${fileName}.gql';`
           );
         }
         let hasManyTemp = '';
@@ -44,11 +44,9 @@ const findForeignKey = (
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${camelCase(p.tableName)}Service.findAll<${pascalCase(
-            p.tableName
-          )}Entity>({ where: { 
+    return this.${camelCase(p.tableName)}Service.findAll({ where: { 
             ${camelCase(p.columnName)}: root.get('id') 
-          });
+          }});
   }
   `;
         } else {
@@ -87,7 +85,7 @@ ${hasManyTemp}`;
           txtImport.add(
             `import { ${pascalCase(
               p.tableName
-            )}${inputCol} } from '../${fileName}/${fileName}.gql';`
+            )}${inputCol} } from '../graphql/${fileName}/${fileName}.gql';`
           );
           txtImport.add(
             `import { ${pascalCase(p.tableName)}Service } from '../service/${fileName}.service';`
@@ -107,11 +105,9 @@ ${hasManyTemp}`;
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${camelCase(p.tableName)}Service.findAll<${pascalCase(
-          p.tableName
-        )}Entity>({ where: { 
+    return this.${camelCase(p.tableName)}Service.findAll({ where: { 
             ${camelCase(p.columnName)}: root.get('id') 
-          });
+          }});
   }
   `;
       }
