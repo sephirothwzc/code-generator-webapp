@@ -64,13 +64,13 @@ const findForeignKey = (
   const columns = keyColumnList
     .map((p) => {
       if (p.tableName === tableItem.tableName) {
+        const fileName = p.referencedTableName.replace(/_/g, '-');
+        txtImport.add(
+          `import { ${pascalCase(
+            p.referencedTableName
+          )}Entity } from '../../lib/model/${fileName}.entity';`
+        );
         if (p.referencedTableName !== p.tableName) {
-          const fileName = p.referencedTableName.replace(/_/g, '-');
-          txtImport.add(
-            `import { ${pascalCase(
-              p.referencedTableName
-            )}Entity } from '../../lib/model/${fileName}.entity';`
-          );
           txtImport.add(
             `import { ${pascalCase(
               p.referencedTableName
@@ -88,7 +88,7 @@ const findForeignKey = (
         // 子表 外键 BelongsTo
         return `
   @Field(() => ${pascalCase(p.referencedTableName)}${inputCol}, { nullable: true })
-  ${pascalCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
+  ${camelCase(p.columnName)}Obj: ${pascalCase(p.referencedTableName)}Entity;
 ${hasManyTemp}`;
       } else {
         if (p.referencedTableName !== p.tableName) {
@@ -166,6 +166,7 @@ const findColumn = (
  * @returns
  */
 export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
+  hasColJson = '';
   const [columns, inputColumns, txtImport, typeImport, valImport] = findColumn(
     columnList,
     tableItem,
