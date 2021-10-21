@@ -109,7 +109,7 @@ const findColumn = (
 
       const nullable = p.isNullable === 'YES' ? '?' : '';
       // json 需要增加 type
-      const sequelizeModelType = p.dataType === 'json' ? ',type: DataType.JSON,' : '';
+      const sequelizeModelType = p.dataType === 'json' ? 'type: DataType.JSON,' : '';
       importDataType = importDataType || p.dataType === 'json';
 
       const foreignKey = keyColumnList.find(

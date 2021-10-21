@@ -24,7 +24,7 @@ const findForeignKey = (
           txtImport.add(
             `import { ${pascalCase(
               p.referencedTableName
-            )}Entity } from '../../lib/model/${fileName}.entity';`
+            )}Entity } from '../lib/model/${fileName}.entity';`
           );
           txtImport.add(
             `import { ${pascalCase(
@@ -82,7 +82,7 @@ ${hasManyTemp}`;
         if (p.referencedTableName !== p.tableName) {
           const fileName = p.tableName.replace(/_/g, '-');
           txtImport.add(
-            `import { ${pascalCase(p.tableName)}Entity } from '../../lib/model/${fileName}.entity';`
+            `import { ${pascalCase(p.tableName)}Entity } from '../lib/model/${fileName}.entity';`
           );
           txtImport.add(
             `import { ${pascalCase(
@@ -99,7 +99,7 @@ ${hasManyTemp}`;
 
         // 主表 主键 Hasmany
         return `
-  @FieldResolver(returns => [${pascalCase(p.tableName)}${inputCol}, { nullable: true })
+  @FieldResolver(returns => [${pascalCase(p.tableName)}${inputCol}], { nullable: true })
   async  ${camelCase(p.tableName)}${pascalCase(p.columnName)}(
     @Root() root: ${pascalCase(tableItem.tableName)}Entity,
     @Ctx() ctx: Context
@@ -117,6 +117,9 @@ ${hasManyTemp}`;
       }
     })
     .join(``);
+  if (columns) {
+    txtImport.add(`import { Context } from '@midwayjs/koa';`);
+  }
   return [columns, txtImport, injectService];
 };
 
@@ -137,7 +140,9 @@ const modelTemplate = ({
 }) => {
   return `import { Provide, Inject } from '@midwayjs/decorator';
 import Bb from 'bluebird';
-import { Resolver, Query, Arg, Int, Mutation, ID } from 'type-graphql';
+import { Resolver, Query, Arg, Int, Mutation, ID ${
+    filedResolver ? ',FieldResolver, Root, Ctx' : ''
+  } } from 'type-graphql';
 import {
   ${className},
   ${className}SaveIn,
@@ -206,7 +211,7 @@ export default class ${className}Resolver {
   }
 
   @Mutation(returns => String, { nullable: true })
-  async ${funName}Destroy(@Arg('id', type => ID) id: string): Promise<void> {
+  async ${funName}Destroy(@Arg('id', type => ID) id: string): Promise<string> {
     return this.${funName}Service.destroyById(id);
   }
   ${filedResolver}

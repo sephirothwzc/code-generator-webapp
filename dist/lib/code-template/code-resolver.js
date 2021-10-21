@@ -11,7 +11,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
         if (p.tableName === tableItem.tableName) {
             if (p.referencedTableName !== p.tableName) {
                 const fileName = p.referencedTableName.replace(/_/g, '-');
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from '../../lib/model/${fileName}.entity';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Entity } from '../lib/model/${fileName}.entity';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol} } from '../${fileName}/${fileName}.gql';`);
             }
             let hasManyTemp = '';
@@ -54,7 +54,7 @@ ${hasManyTemp}`;
         else {
             if (p.referencedTableName !== p.tableName) {
                 const fileName = p.tableName.replace(/_/g, '-');
-                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from '../../lib/model/${fileName}.entity';`);
+                txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from '../lib/model/${fileName}.entity';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}${inputCol} } from '../${fileName}/${fileName}.gql';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Service } from '../service/${fileName}.service';`);
                 injectService.add(`  @Inject()
@@ -62,7 +62,7 @@ ${hasManyTemp}`;
 `);
             }
             return `
-  @FieldResolver(returns => [${(0, helper_1.pascalCase)(p.tableName)}${inputCol}, { nullable: true })
+  @FieldResolver(returns => [${(0, helper_1.pascalCase)(p.tableName)}${inputCol}], { nullable: true })
   async  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}(
     @Root() root: ${(0, helper_1.pascalCase)(tableItem.tableName)}Entity,
     @Ctx() ctx: Context
@@ -78,12 +78,15 @@ ${hasManyTemp}`;
         }
     })
         .join(``);
+    if (columns) {
+        txtImport.add(`import { Context } from '@midwayjs/koa';`);
+    }
     return [columns, txtImport, injectService];
 };
 const modelTemplate = ({ className, funName, modelFileName, filedResolver, importFiled, injectService, }) => {
     return `import { Provide, Inject } from '@midwayjs/decorator';
 import Bb from 'bluebird';
-import { Resolver, Query, Arg, Int, Mutation, ID } from 'type-graphql';
+import { Resolver, Query, Arg, Int, Mutation, ID ${filedResolver ? ',FieldResolver, Root, Ctx' : ''} } from 'type-graphql';
 import {
   ${className},
   ${className}SaveIn,
@@ -152,7 +155,7 @@ export default class ${className}Resolver {
   }
 
   @Mutation(returns => String, { nullable: true })
-  async ${funName}Destroy(@Arg('id', type => ID) id: string): Promise<void> {
+  async ${funName}Destroy(@Arg('id', type => ID) id: string): Promise<string> {
     return this.${funName}Service.destroyById(id);
   }
   ${filedResolver}

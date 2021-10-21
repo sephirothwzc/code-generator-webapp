@@ -83,7 +83,7 @@ const findColumn = (columnList, tableItem, keyColumnList) => {
         const propertyName = (0, lodash_1.camelCase)(p.columnName);
         const comment = p.columnComment || p.columnName;
         const nullable = p.isNullable === 'YES' ? '?' : '';
-        const sequelizeModelType = p.dataType === 'json' ? ',type: DataType.JSON,' : '';
+        const sequelizeModelType = p.dataType === 'json' ? 'type: DataType.JSON,' : '';
         importDataType = importDataType || p.dataType === 'json';
         const foreignKey = keyColumnList.find((columnRow) => columnRow.tableName === tableItem.tableName && columnRow.columnName === p.columnName);
         const foreignKeyTxt = foreignKey
