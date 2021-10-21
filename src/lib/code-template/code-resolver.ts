@@ -64,7 +64,7 @@ const findForeignKey = (
         // 子表 外键 BelongsTo
         return `  
   @FieldResolver(returns => ${pascalCase(p.referencedTableName)}${inputCol}, { nullable: true })
-  async companyIdObj(
+  async ${camelCase(p.columnName)}Obj(
     @Root() root: ${pascalCase(tableItem.tableName)}Entity,
     @Ctx() ctx: Context
   ): Promise<${pascalCase(p.referencedTableName)}Entity> {

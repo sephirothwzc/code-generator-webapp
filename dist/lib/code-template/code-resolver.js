@@ -40,7 +40,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
             }
             return `  
   @FieldResolver(returns => ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol}, { nullable: true })
-  async companyIdObj(
+  async ${(0, lodash_1.camelCase)(p.columnName)}Obj(
     @Root() root: ${(0, helper_1.pascalCase)(tableItem.tableName)}Entity,
     @Ctx() ctx: Context
   ): Promise<${(0, helper_1.pascalCase)(p.referencedTableName)}Entity> {
