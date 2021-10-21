@@ -36,7 +36,7 @@ const findForeignKey = (
         // 自我关联
         if (p.referencedTableName === tableItem.tableName) {
           hasManyTemp = `
-  @FieldResolver(returns => [${pascalCase(p.referencedTableName)}${inputCol}, { nullable: true })
+  @FieldResolver(returns => [${pascalCase(p.referencedTableName)}${inputCol}], { nullable: true })
   async  ${camelCase(p.tableName)}${pascalCase(p.columnName)}(
     @Root() root: ${pascalCase(tableItem.tableName)}Entity,
     @Ctx() ctx: Context

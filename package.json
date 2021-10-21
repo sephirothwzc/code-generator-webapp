@@ -1,11 +1,11 @@
 {
   "name": "code-generator-midway2",
-  "version": "1.0.25",
+  "version": "1.0.27",
   "description": "midway2.0 生成器",
   "main": "index.js",
   "scripts": {
     "commit": "yarn build && git add . && git-cz && git push",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "changelog": "conventional-changelog -p angular -i CHANGELO G.md -s -r 0",
     "dev": "nodemon --exec ts-node src/index.ts",
     "start": "ts-node-dev --respawn src/index.ts",
     "code": "node dist/index.js",

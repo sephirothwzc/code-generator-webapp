@@ -17,7 +17,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
             let hasManyTemp = '';
             if (p.referencedTableName === tableItem.tableName) {
                 hasManyTemp = `
-  @FieldResolver(returns => [${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol}, { nullable: true })
+  @FieldResolver(returns => [${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol}], { nullable: true })
   async  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}(
     @Root() root: ${(0, helper_1.pascalCase)(tableItem.tableName)}Entity,
     @Ctx() ctx: Context
