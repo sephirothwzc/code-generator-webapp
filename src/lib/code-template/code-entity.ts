@@ -99,6 +99,7 @@ const findColumn = (
   keyColumnList: IQueryKeyColumnOut[]
 ) => {
   let importForeignKeyTo = false;
+  let importDataType = false;
   const normal = columnList
     .filter((p) => !notColumn.includes(p.columnName))
     .map((p) => {
@@ -107,6 +108,9 @@ const findColumn = (
       const comment = p.columnComment || p.columnName;
 
       const nullable = p.isNullable === 'YES' ? '?' : '';
+      // json 需要增加 type
+      const sequelizeModelType = p.dataType === 'json' ? ',type: DataType.JSON,' : '';
+      importDataType = importDataType || p.dataType === 'json';
 
       const foreignKey = keyColumnList.find(
         (columnRow) =>
@@ -123,7 +127,7 @@ const findColumn = (
    * ${comment}
    */${foreignKeyTxt}
    @Column({
-    comment: '${comment}',
+    comment: '${comment}',${sequelizeModelType}
   })
   ${propertyName}${nullable}: ${type};
 `;
@@ -150,17 +154,26 @@ const findColumn = (
     importHasManyTo,
     importForeignKeyTo,
     constTxt.join(''),
+    importDataType,
   ];
 };
 
 export const send = ({ columnList, tableItem, keyColumnList }: ISend) => {
-  const [columns, txtImport, importBelongsTo, importHasManyTo, importForeignKeyTo, constTxt] =
-    findColumn(columnList, tableItem, keyColumnList);
+  const [
+    columns,
+    txtImport,
+    importBelongsTo,
+    importHasManyTo,
+    importForeignKeyTo,
+    constTxt,
+    importDataType,
+  ] = findColumn(columnList, tableItem, keyColumnList);
 
   const seuqliezeTypeImport = new Set(['Column']);
   importBelongsTo && seuqliezeTypeImport.add('BelongsTo');
   importHasManyTo && seuqliezeTypeImport.add('HasMany');
   importForeignKeyTo && seuqliezeTypeImport.add('ForeignKey');
+  importDataType && seuqliezeTypeImport.add('DataType');
 
   return modelTemplate({
     tableName: tableItem.tableName,

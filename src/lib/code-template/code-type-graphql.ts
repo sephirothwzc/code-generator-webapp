@@ -143,13 +143,14 @@ const findColumn = (
   ${propertyName}${nullable}: ${type};
 `;
     });
-  const [columns, txtImport] = findForeignKey(tableItem, keyColumnList);
+  // 弃用 采用resolver方式
+  // const [columns, txtImport] = findForeignKey(tableItem, keyColumnList);
   const [inputColumns, inputTxtImport] = findForeignKey(tableItem, keyColumnList, 'SaveIn');
-  inputTxtImport.forEach((p) => txtImport.add(p));
+  // inputTxtImport.forEach((p) => txtImport.add(p));
   return [
-    [...normal, columns].join(''),
+    normal.join(''),
     [...normal, inputColumns].join(''),
-    Array.from(txtImport).join(''),
+    Array.from(inputTxtImport).join(''),
     Array.from(gqlTypeImport)
       .filter((p) => !['String', 'Boolean', 'GraphQLJSONObject', 'Int'].includes(p))
       .join(', '),
