@@ -5,7 +5,6 @@ const lodash_1 = require("lodash");
 const helper_1 = require("../utils/helper");
 const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
     const txtImport = new Set();
-    const injectService = new Set();
     const columns = keyColumnList
         .map((p) => {
         if (p.tableName === tableItem.tableName) {
@@ -20,12 +19,13 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
   @FieldResolver(returns => [${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol}], { nullable: true })
   async  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}(
     @Root() root: ${(0, helper_1.pascalCase)(tableItem.tableName)}Entity,
-    @Ctx() ctx: Context
+    @Ctx() ctx: ExtendCtx
   ): Promise<Array<${(0, helper_1.pascalCase)(p.tableName)}Entity>> {
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${(0, lodash_1.camelCase)(p.tableName)}Service.findAll({ where: { 
+    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.tableName)}Service>('${(0, lodash_1.camelCase)(p.tableName)}Service');
+    return service.findAll({ where: { 
             ${(0, lodash_1.camelCase)(p.columnName)}: root.get('id') 
           }});
   }
@@ -34,20 +34,18 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
             else {
                 const fileName = p.referencedTableName.replace(/_/g, '-');
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.referencedTableName)}Service } from '../service/${fileName}.service';`);
-                injectService.add(`  @Inject()
-  ${(0, lodash_1.camelCase)(p.referencedTableName)}Service: ${(0, helper_1.pascalCase)(p.referencedTableName)}Service;
-`);
             }
             return `  
   @FieldResolver(returns => ${(0, helper_1.pascalCase)(p.referencedTableName)}${inputCol}, { nullable: true })
   async ${(0, lodash_1.camelCase)(p.columnName)}Obj(
     @Root() root: ${(0, helper_1.pascalCase)(tableItem.tableName)}Entity,
-    @Ctx() ctx: Context
+    @Ctx() ctx: ExtendCtx
   ): Promise<${(0, helper_1.pascalCase)(p.referencedTableName)}Entity> {
     if (!root.get('${(0, lodash_1.camelCase)(p.columnName)}')) {
       return undefined;
     }
-    return this.${(0, lodash_1.camelCase)(p.referencedTableName)}Service.findByPk<${(0, helper_1.pascalCase)(p.referencedTableName)}Entity>(root.get('${(0, lodash_1.camelCase)(p.columnName)}'));
+    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.referencedTableName)}Service>('${(0, lodash_1.camelCase)(p.referencedTableName)}Service');
+    return service.findByPk<${(0, helper_1.pascalCase)(p.referencedTableName)}Entity>(root.get('${(0, lodash_1.camelCase)(p.columnName)}'));
   }
 ${hasManyTemp}`;
         }
@@ -57,20 +55,18 @@ ${hasManyTemp}`;
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Entity } from '../lib/model/${fileName}.entity';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}${inputCol} } from '../graphql/${fileName}/${fileName}.gql';`);
                 txtImport.add(`import { ${(0, helper_1.pascalCase)(p.tableName)}Service } from '../service/${fileName}.service';`);
-                injectService.add(`  @Inject()
-  ${(0, lodash_1.camelCase)(p.tableName)}Service: ${(0, helper_1.pascalCase)(p.tableName)}Service;
-`);
             }
             return `
   @FieldResolver(returns => [${(0, helper_1.pascalCase)(p.tableName)}${inputCol}], { nullable: true })
   async  ${(0, lodash_1.camelCase)(p.tableName)}${(0, helper_1.pascalCase)(p.columnName)}(
     @Root() root: ${(0, helper_1.pascalCase)(tableItem.tableName)}Entity,
-    @Ctx() ctx: Context
+    @Ctx() ctx: ExtendCtx
   ): Promise<Array<${(0, helper_1.pascalCase)(p.tableName)}Entity>> {
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${(0, lodash_1.camelCase)(p.tableName)}Service.findAll({ where: { 
+    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.tableName)}Service>('${(0, lodash_1.camelCase)(p.tableName)}Service');
+    return service.findAll({ where: { 
             ${(0, lodash_1.camelCase)(p.columnName)}: root.get('id') 
           }});
   }
@@ -78,12 +74,9 @@ ${hasManyTemp}`;
         }
     })
         .join(``);
-    if (columns) {
-        txtImport.add(`import { Context } from '@midwayjs/koa';`);
-    }
-    return [columns, txtImport, injectService];
+    return [columns, txtImport];
 };
-const modelTemplate = ({ className, funName, modelFileName, filedResolver, importFiled, injectService, }) => {
+const modelTemplate = ({ className, funName, modelFileName, filedResolver, importFiled, }) => {
     return `import { Provide, Inject } from '@midwayjs/decorator';
 import Bb from 'bluebird';
 import { Resolver, Query, Arg, Int, Mutation, ID ${filedResolver ? ',FieldResolver, Root, Ctx' : ''} } from 'type-graphql';
@@ -95,82 +88,93 @@ import {
 import QueryListParam from '../graphql/utils/query-list-param.gql';
 import { ${className}Service } from '../service/${modelFileName}.service';
 import { ${className}Entity } from '../lib/model/${modelFileName}.entity';
+import { ExtendCtx } from '../graphql/utils/extend-graphql.middleware';
 ${importFiled}
 
 @Provide()
 @Resolver(() => ${className})
 export default class ${className}Resolver {
-  @Inject()
-  ${funName}Service: ${className}Service;
-  ${injectService}
 
   @Query(type => Int)
   async ${funName}Count(
     @Arg('param', () => QueryListParam, { nullable: true })
-    param: QueryListParam
+    param: QueryListParam,
+    @Ctx() ctx: ExtendCtx
   ): Promise<number> {
-    return this.${funName}Service.findCount(param);
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.findCount(param);
   }
 
   @Query(returns => ${className}List, { nullable: true })
   async ${funName}List(
     @Arg('param', type => QueryListParam, { nullable: true })
-    param: QueryListParam
+    param: QueryListParam,
+    @Ctx() ctx: ExtendCtx
   ): Promise<{
     list: ${className}Entity[];
     count: number;
   }> {
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
     return Bb.props({
-      list: this.${funName}Service.findAll(param),
-      count: this.${funName}Service.findCount(param),
+      list: service.findAll(param),
+      count: service.findCount(param),
     });
   }
 
   @Query(returns => ${className}, { nullable: true })
-  async ${funName}(@Arg('id', type => ID) id: string): Promise<${className}Entity> {
-    return this.${funName}Service.findByPk(id);
+  async ${funName}(@Arg('id', type => ID) id: string,
+    @Ctx() ctx: ExtendCtx): Promise<${className}Entity> {
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.findByPk(id);
   }
   @Query(returns => [${className}])
   async ${funName}All(
     @Arg('param', type => QueryListParam, { nullable: true })
-    param: QueryListParam
+    param: QueryListParam,
+    @Ctx() ctx: ExtendCtx
   ): Promise<Array<${className}>> {
-    return this.${funName}Service.findAll(param) as any;
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.findAll(param) as any;
   }
 
   @Mutation(returns => ${className}, {
     name: '${funName}',
   })
   async ${funName}Save(
-    @Arg('param', type => ${className}SaveIn) param: ${className}Entity
+    @Arg('param', type => ${className}SaveIn) param: ${className}Entity,
+    @Ctx() ctx: ExtendCtx
   ): Promise<${className}Entity> {
-    return this.${funName}Service.save(param);
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.save(param);
   }
 
   @Mutation(returns => [${className}], { nullable: true })
   async ${funName}Bulk(
-    @Arg('param', type => [${className}SaveIn]) param: [${className}Entity]
+    @Arg('param', type => [${className}SaveIn]) param: [${className}Entity],
+    @Ctx() ctx: ExtendCtx
   ): Promise<${className}Entity[]> {
-    return this.${funName}Service.bulkSave(param);
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.bulkSave(param);
   }
 
   @Mutation(returns => String, { nullable: true })
-  async ${funName}Destroy(@Arg('id', type => ID) id: string): Promise<string> {
-    return this.${funName}Service.destroyById(id);
+  async ${funName}Destroy(@Arg('id', type => ID) id: string,
+    @Ctx() ctx: ExtendCtx): Promise<string> {
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.destroyById(id);
   }
   ${filedResolver}
 }
 `;
 };
 const send = ({ tableItem, keyColumnList }) => {
-    const [filedResolver, importFiled, injectService] = findForeignKey(tableItem, keyColumnList);
+    const [filedResolver, importFiled] = findForeignKey(tableItem, keyColumnList);
     return modelTemplate({
         className: (0, helper_1.pascalCase)(tableItem.tableName),
         funName: (0, lodash_1.camelCase)(tableItem.tableName),
         modelFileName: tableItem.tableName.replace(/_/g, '-'),
         filedResolver,
         importFiled: Array.from(importFiled).join(''),
-        injectService: Array.from(injectService).join(''),
     });
 };
 exports.send = send;

@@ -13,9 +13,8 @@ const findForeignKey = (
   tableItem: IQueryTableOut,
   keyColumnList: IQueryKeyColumnOut[],
   inputCol = ''
-): [string, Set<string>, Set<string>] => {
+): [string, Set<string>] => {
   const txtImport = new Set<string>();
-  const injectService = new Set<string>();
   const columns = keyColumnList
     .map((p) => {
       if (p.tableName === tableItem.tableName) {
@@ -39,12 +38,15 @@ const findForeignKey = (
   @FieldResolver(returns => [${pascalCase(p.referencedTableName)}${inputCol}], { nullable: true })
   async  ${camelCase(p.tableName)}${pascalCase(p.columnName)}(
     @Root() root: ${pascalCase(tableItem.tableName)}Entity,
-    @Ctx() ctx: Context
+    @Ctx() ctx: ExtendCtx
   ): Promise<Array<${pascalCase(p.tableName)}Entity>> {
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${camelCase(p.tableName)}Service.findAll({ where: { 
+    const service = await ctx.getServices<${pascalCase(p.tableName)}Service>('${camelCase(
+            p.tableName
+          )}Service');
+    return service.findAll({ where: { 
             ${camelCase(p.columnName)}: root.get('id') 
           }});
   }
@@ -56,24 +58,23 @@ const findForeignKey = (
               p.referencedTableName
             )}Service } from '../service/${fileName}.service';`
           );
-          // 非自我关联 增加 inject
-          injectService.add(`  @Inject()
-  ${camelCase(p.referencedTableName)}Service: ${pascalCase(p.referencedTableName)}Service;
-`);
         }
         // 子表 外键 BelongsTo
         return `  
   @FieldResolver(returns => ${pascalCase(p.referencedTableName)}${inputCol}, { nullable: true })
   async ${camelCase(p.columnName)}Obj(
     @Root() root: ${pascalCase(tableItem.tableName)}Entity,
-    @Ctx() ctx: Context
+    @Ctx() ctx: ExtendCtx
   ): Promise<${pascalCase(p.referencedTableName)}Entity> {
     if (!root.get('${camelCase(p.columnName)}')) {
       return undefined;
     }
-    return this.${camelCase(p.referencedTableName)}Service.findByPk<${pascalCase(
+    const service = await ctx.getServices<${pascalCase(p.referencedTableName)}Service>('${camelCase(
           p.referencedTableName
-        )}Entity>(root.get('${camelCase(p.columnName)}'));
+        )}Service');
+    return service.findByPk<${pascalCase(p.referencedTableName)}Entity>(root.get('${camelCase(
+          p.columnName
+        )}'));
   }
 ${hasManyTemp}`;
       } else {
@@ -90,9 +91,6 @@ ${hasManyTemp}`;
           txtImport.add(
             `import { ${pascalCase(p.tableName)}Service } from '../service/${fileName}.service';`
           );
-          injectService.add(`  @Inject()
-  ${camelCase(p.tableName)}Service: ${pascalCase(p.tableName)}Service;
-`);
         }
 
         // 主表 主键 Hasmany
@@ -100,12 +98,15 @@ ${hasManyTemp}`;
   @FieldResolver(returns => [${pascalCase(p.tableName)}${inputCol}], { nullable: true })
   async  ${camelCase(p.tableName)}${pascalCase(p.columnName)}(
     @Root() root: ${pascalCase(tableItem.tableName)}Entity,
-    @Ctx() ctx: Context
+    @Ctx() ctx: ExtendCtx
   ): Promise<Array<${pascalCase(p.tableName)}Entity>> {
     if (!root.get('id')) {
       return undefined;
     }
-    return this.${camelCase(p.tableName)}Service.findAll({ where: { 
+    const service = await ctx.getServices<${pascalCase(p.tableName)}Service>('${camelCase(
+          p.tableName
+        )}Service');
+    return service.findAll({ where: { 
             ${camelCase(p.columnName)}: root.get('id') 
           }});
   }
@@ -113,10 +114,8 @@ ${hasManyTemp}`;
       }
     })
     .join(``);
-  if (columns) {
-    txtImport.add(`import { Context } from '@midwayjs/koa';`);
-  }
-  return [columns, txtImport, injectService];
+
+  return [columns, txtImport];
 };
 
 const modelTemplate = ({
@@ -125,14 +124,12 @@ const modelTemplate = ({
   modelFileName,
   filedResolver,
   importFiled,
-  injectService,
 }: {
   className: string;
   funName: string;
   modelFileName: string;
   filedResolver: string;
   importFiled: string;
-  injectService: string;
 }) => {
   return `import { Provide, Inject } from '@midwayjs/decorator';
 import Bb from 'bluebird';
@@ -147,68 +144,80 @@ import {
 import QueryListParam from '../graphql/utils/query-list-param.gql';
 import { ${className}Service } from '../service/${modelFileName}.service';
 import { ${className}Entity } from '../lib/model/${modelFileName}.entity';
+import { ExtendCtx } from '../graphql/utils/extend-graphql.middleware';
 ${importFiled}
 
 @Provide()
 @Resolver(() => ${className})
 export default class ${className}Resolver {
-  @Inject()
-  ${funName}Service: ${className}Service;
-  ${injectService}
 
   @Query(type => Int)
   async ${funName}Count(
     @Arg('param', () => QueryListParam, { nullable: true })
-    param: QueryListParam
+    param: QueryListParam,
+    @Ctx() ctx: ExtendCtx
   ): Promise<number> {
-    return this.${funName}Service.findCount(param);
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.findCount(param);
   }
 
   @Query(returns => ${className}List, { nullable: true })
   async ${funName}List(
     @Arg('param', type => QueryListParam, { nullable: true })
-    param: QueryListParam
+    param: QueryListParam,
+    @Ctx() ctx: ExtendCtx
   ): Promise<{
     list: ${className}Entity[];
     count: number;
   }> {
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
     return Bb.props({
-      list: this.${funName}Service.findAll(param),
-      count: this.${funName}Service.findCount(param),
+      list: service.findAll(param),
+      count: service.findCount(param),
     });
   }
 
   @Query(returns => ${className}, { nullable: true })
-  async ${funName}(@Arg('id', type => ID) id: string): Promise<${className}Entity> {
-    return this.${funName}Service.findByPk(id);
+  async ${funName}(@Arg('id', type => ID) id: string,
+    @Ctx() ctx: ExtendCtx): Promise<${className}Entity> {
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.findByPk(id);
   }
   @Query(returns => [${className}])
   async ${funName}All(
     @Arg('param', type => QueryListParam, { nullable: true })
-    param: QueryListParam
+    param: QueryListParam,
+    @Ctx() ctx: ExtendCtx
   ): Promise<Array<${className}>> {
-    return this.${funName}Service.findAll(param) as any;
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.findAll(param) as any;
   }
 
   @Mutation(returns => ${className}, {
     name: '${funName}',
   })
   async ${funName}Save(
-    @Arg('param', type => ${className}SaveIn) param: ${className}Entity
+    @Arg('param', type => ${className}SaveIn) param: ${className}Entity,
+    @Ctx() ctx: ExtendCtx
   ): Promise<${className}Entity> {
-    return this.${funName}Service.save(param);
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.save(param);
   }
 
   @Mutation(returns => [${className}], { nullable: true })
   async ${funName}Bulk(
-    @Arg('param', type => [${className}SaveIn]) param: [${className}Entity]
+    @Arg('param', type => [${className}SaveIn]) param: [${className}Entity],
+    @Ctx() ctx: ExtendCtx
   ): Promise<${className}Entity[]> {
-    return this.${funName}Service.bulkSave(param);
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.bulkSave(param);
   }
 
   @Mutation(returns => String, { nullable: true })
-  async ${funName}Destroy(@Arg('id', type => ID) id: string): Promise<string> {
-    return this.${funName}Service.destroyById(id);
+  async ${funName}Destroy(@Arg('id', type => ID) id: string,
+    @Ctx() ctx: ExtendCtx): Promise<string> {
+    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    return service.destroyById(id);
   }
   ${filedResolver}
 }
@@ -216,13 +225,12 @@ export default class ${className}Resolver {
 };
 
 export const send = ({ tableItem, keyColumnList }: ISend) => {
-  const [filedResolver, importFiled, injectService] = findForeignKey(tableItem, keyColumnList);
+  const [filedResolver, importFiled] = findForeignKey(tableItem, keyColumnList);
   return modelTemplate({
     className: pascalCase(tableItem.tableName),
     funName: camelCase(tableItem.tableName),
     modelFileName: tableItem.tableName.replace(/_/g, '-'),
     filedResolver,
     importFiled: Array.from(importFiled).join(''),
-    injectService: Array.from(injectService).join(''),
   });
 };
