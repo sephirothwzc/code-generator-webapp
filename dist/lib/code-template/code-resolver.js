@@ -24,7 +24,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
     if (!root.get('id')) {
       return undefined;
     }
-    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.tableName)}Service>('${(0, lodash_1.camelCase)(p.tableName)}Service');
+    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.tableName)}Service>(ctx, '${(0, lodash_1.camelCase)(p.tableName)}Service');
     return service.findAll({ where: { 
             ${(0, lodash_1.camelCase)(p.columnName)}: root.get('id') 
           }});
@@ -44,7 +44,7 @@ const findForeignKey = (tableItem, keyColumnList, inputCol = '') => {
     if (!root.get('${(0, lodash_1.camelCase)(p.columnName)}')) {
       return undefined;
     }
-    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.referencedTableName)}Service>('${(0, lodash_1.camelCase)(p.referencedTableName)}Service');
+    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.referencedTableName)}Service>(ctx, '${(0, lodash_1.camelCase)(p.referencedTableName)}Service');
     return service.findByPk<${(0, helper_1.pascalCase)(p.referencedTableName)}Entity>(root.get('${(0, lodash_1.camelCase)(p.columnName)}'));
   }
 ${hasManyTemp}`;
@@ -65,7 +65,7 @@ ${hasManyTemp}`;
     if (!root.get('id')) {
       return undefined;
     }
-    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.tableName)}Service>('${(0, lodash_1.camelCase)(p.tableName)}Service');
+    const service = await ctx.getServices<${(0, helper_1.pascalCase)(p.tableName)}Service>(ctx, '${(0, lodash_1.camelCase)(p.tableName)}Service');
     return service.findAll({ where: { 
             ${(0, lodash_1.camelCase)(p.columnName)}: root.get('id') 
           }});
@@ -101,7 +101,7 @@ export default class ${className}Resolver {
     param: QueryListParam,
     @Ctx() ctx: ExtendCtx
   ): Promise<number> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return service.findCount(param);
   }
 
@@ -114,7 +114,7 @@ export default class ${className}Resolver {
     list: ${className}Entity[];
     count: number;
   }> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return Bb.props({
       list: service.findAll(param),
       count: service.findCount(param),
@@ -124,7 +124,7 @@ export default class ${className}Resolver {
   @Query(returns => ${className}, { nullable: true })
   async ${funName}(@Arg('id', type => ID) id: string,
     @Ctx() ctx: ExtendCtx): Promise<${className}Entity> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return service.findByPk(id);
   }
   @Query(returns => [${className}])
@@ -133,7 +133,7 @@ export default class ${className}Resolver {
     param: QueryListParam,
     @Ctx() ctx: ExtendCtx
   ): Promise<Array<${className}>> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return service.findAll(param) as any;
   }
 
@@ -144,7 +144,7 @@ export default class ${className}Resolver {
     @Arg('param', type => ${className}SaveIn) param: ${className}Entity,
     @Ctx() ctx: ExtendCtx
   ): Promise<${className}Entity> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return service.save(param);
   }
 
@@ -153,14 +153,14 @@ export default class ${className}Resolver {
     @Arg('param', type => [${className}SaveIn]) param: [${className}Entity],
     @Ctx() ctx: ExtendCtx
   ): Promise<${className}Entity[]> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return service.bulkSave(param);
   }
 
   @Mutation(returns => String, { nullable: true })
   async ${funName}Destroy(@Arg('id', type => ID) id: string,
     @Ctx() ctx: ExtendCtx): Promise<string> {
-    const service = await ctx.getServices<${className}Service>('${funName}Service');
+    const service = await ctx.getServices<${className}Service>(ctx, '${funName}Service');
     return service.destroyById(id);
   }
   ${filedResolver}
