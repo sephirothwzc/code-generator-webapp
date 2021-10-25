@@ -79,7 +79,7 @@ ${hasManyTemp}`;
 const modelTemplate = ({ className, funName, modelFileName, filedResolver, importFiled, }) => {
     return `import { Provide } from '@midwayjs/decorator';
 import Bb from 'bluebird';
-import { Resolver, Query, Arg, Int, Mutation, ID ${filedResolver ? ',FieldResolver, Root, Ctx' : ''} } from 'type-graphql';
+import { Resolver, Query, Arg, Int, Mutation, ID, Ctx ${filedResolver ? ',FieldResolver, Root' : ''} } from 'type-graphql';
 import {
   ${className},
   ${className}SaveIn,

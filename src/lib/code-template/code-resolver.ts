@@ -133,8 +133,8 @@ const modelTemplate = ({
 }) => {
   return `import { Provide } from '@midwayjs/decorator';
 import Bb from 'bluebird';
-import { Resolver, Query, Arg, Int, Mutation, ID ${
-    filedResolver ? ',FieldResolver, Root, Ctx' : ''
+import { Resolver, Query, Arg, Int, Mutation, ID, Ctx ${
+    filedResolver ? ',FieldResolver, Root' : ''
   } } from 'type-graphql';
 import {
   ${className},
