@@ -131,7 +131,7 @@ const modelTemplate = ({
   filedResolver: string;
   importFiled: string;
 }) => {
-  return `import { Provide, Inject } from '@midwayjs/decorator';
+  return `import { Provide } from '@midwayjs/decorator';
 import Bb from 'bluebird';
 import { Resolver, Query, Arg, Int, Mutation, ID ${
     filedResolver ? ',FieldResolver, Root, Ctx' : ''
