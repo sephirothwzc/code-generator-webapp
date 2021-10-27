@@ -85,6 +85,7 @@ ${hasManyTemp}`;
 };
 const modelTemplate = ({ className, funName, modelFileName, filedResolver, importFiled, injectService, }) => {
     return `import { Provide, Inject } from '@midwayjs/decorator';
+import ResolverBase from '../lib/base/resolver.base';
 import Bb from 'bluebird';
 import { Resolver, Query, Arg, Int, Mutation, ID ${filedResolver ? ',FieldResolver, Root, Ctx' : ''} } from 'type-graphql';
 import {
@@ -99,7 +100,7 @@ ${importFiled}
 
 @Provide()
 @Resolver(() => ${className})
-export default class ${className}Resolver {
+export default class ${className}Resolver extends ResolverBase {
   @Inject()
   ${funName}Service: ${className}Service;
   ${injectService}
