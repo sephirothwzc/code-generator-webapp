@@ -330,13 +330,13 @@ const findPropertyWhere = (columnList: Array<IQueryColumnOut>) => {
  * @param columnList
  * @returns
  */
-const findPropertyCloumn = (columnList: Array<IQueryColumnOut>) => {
+const findPropertyCloumn = (columnList: Array<IQueryColumnOut>, className: string) => {
   const list = columnList
     .filter((p) => !notColumn.includes(p.columnName))
     .map((p) => {
       return `{
         key: '${camelCase(p.columnName)}',
-        ...getColumnSearch<AppUserFragment>('${camelCase(p.columnName)}'),
+        ...getColumnSearch<${className}Fragment>('${camelCase(p.columnName)}'),
         title: '${p.columnComment}',
       },`;
     });
@@ -350,6 +350,6 @@ export const send = ({ tableItem, columnList }: ISend) => {
     className: pascalCase(tableItem.tableName),
     routerName: replace(tableItem.tableName, '_', '-'),
     propertyWhere: findPropertyWhere(columnList),
-    propertyColunm: findPropertyCloumn(columnList),
+    propertyColunm: findPropertyCloumn(columnList, pascalCase(tableItem.tableName)),
   });
 };

@@ -306,13 +306,13 @@ const findPropertyWhere = (columnList) => {
     return list.join(`
 `);
 };
-const findPropertyCloumn = (columnList) => {
+const findPropertyCloumn = (columnList, className) => {
     const list = columnList
         .filter((p) => !notColumn.includes(p.columnName))
         .map((p) => {
         return `{
         key: '${(0, lodash_1.camelCase)(p.columnName)}',
-        ...getColumnSearch<AppUserFragment>('${(0, lodash_1.camelCase)(p.columnName)}'),
+        ...getColumnSearch<${className}Fragment>('${(0, lodash_1.camelCase)(p.columnName)}'),
         title: '${p.columnComment}',
       },`;
     });
@@ -325,7 +325,7 @@ const send = ({ tableItem, columnList }) => {
         className: (0, helper_1.pascalCase)(tableItem.tableName),
         routerName: (0, lodash_1.replace)(tableItem.tableName, '_', '-'),
         propertyWhere: findPropertyWhere(columnList),
-        propertyColunm: findPropertyCloumn(columnList),
+        propertyColunm: findPropertyCloumn(columnList, (0, helper_1.pascalCase)(tableItem.tableName)),
     });
 };
 exports.send = send;
