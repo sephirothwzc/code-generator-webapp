@@ -10,6 +10,7 @@ import { send as serviceSend } from './code-template/code-service';
 import { send as operationSend } from './code-template/code-operation';
 import { send as resolverSend } from './code-template/code-resolver';
 import { send as reactGql } from './code-template/code-react-gql';
+import { send as reactAntdList } from './code-template/code-react-gql';
 import fs from 'fs';
 import { promisify } from 'util';
 import bluebird from 'bluebird';
@@ -136,7 +137,15 @@ const getConn = (config: ISequelizeConfig): Sequelize => {
 /**
  * 生成类型
  */
-const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'gql-react'];
+const codeTypeArray = [
+  'entity',
+  'typeGraphql',
+  'operation',
+  'resolver',
+  'service',
+  'gql-react',
+  'react-antd-list',
+];
 
 /**
  * 生成对象
@@ -192,6 +201,15 @@ const allFun = {
     },
     extension: 'gql',
     fileName: 'operation',
+  },
+  'react-antd-list': {
+    fun: reactAntdList,
+    path: (tableName: string) => {
+      const fileName = tableName.replace(/_/g, '-');
+      return `./src/views/${fileName}`;
+    },
+    extension: 'tsx',
+    fileName: 'list',
   },
 };
 
