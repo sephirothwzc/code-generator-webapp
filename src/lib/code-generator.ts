@@ -9,6 +9,7 @@ import { send as typeGraphqlSend } from './code-template/code-type-graphql';
 import { send as serviceSend } from './code-template/code-service';
 import { send as operationSend } from './code-template/code-operation';
 import { send as resolverSend } from './code-template/code-resolver';
+import { send as reactGql } from './code-template/code-react-gql';
 import fs from 'fs';
 import { promisify } from 'util';
 import bluebird from 'bluebird';
@@ -89,6 +90,9 @@ export interface IQueryColumnOut {
 }
 
 export interface IFileObject {
+  /**
+   * 第三方方法调用
+   */
   fun: ({
     columnList,
     tableItem,
@@ -98,6 +102,9 @@ export interface IFileObject {
     tableItem: IQueryTableOut;
     keyColumnList: Array<IQueryKeyColumnOut>;
   }) => Promise<string>;
+  /**
+   * 自定义文件扩展方法
+   */
   path: string | ((tableName: string) => string);
   /**
    * 后缀
@@ -129,7 +136,7 @@ const getConn = (config: ISequelizeConfig): Sequelize => {
 /**
  * 生成类型
  */
-const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service'];
+const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'gql-react'];
 
 /**
  * 生成对象
@@ -176,6 +183,15 @@ const allFun = {
     fun: resolverSend,
     path: `./src/resolver`,
     suffix: 'resolver',
+  },
+  'gql-react': {
+    fun: reactGql,
+    path: (tableName: string) => {
+      const fileName = tableName.replace(/_/g, '-');
+      return `./src/graphql/${fileName}`;
+    },
+    extension: 'gql',
+    fileName: 'operation',
   },
 };
 

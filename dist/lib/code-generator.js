@@ -15,6 +15,7 @@ const code_type_graphql_1 = require("./code-template/code-type-graphql");
 const code_service_1 = require("./code-template/code-service");
 const code_operation_1 = require("./code-template/code-operation");
 const code_resolver_1 = require("./code-template/code-resolver");
+const code_react_gql_1 = require("./code-template/code-react-gql");
 const fs_1 = __importDefault(require("fs"));
 const util_1 = require("util");
 const bluebird_1 = __importDefault(require("bluebird"));
@@ -23,7 +24,7 @@ const getConn = (config) => {
     !sequelize && (sequelize = new sequelize_typescript_1.Sequelize(config));
     return sequelize;
 };
-const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service'];
+const codeTypeArray = ['entity', 'typeGraphql', 'operation', 'resolver', 'service', 'gql-react'];
 const allFun = {
     entity: {
         fun: code_entity_1.send,
@@ -57,6 +58,15 @@ const allFun = {
         fun: code_resolver_1.send,
         path: `./src/resolver`,
         suffix: 'resolver',
+    },
+    'gql-react': {
+        fun: code_react_gql_1.send,
+        path: (tableName) => {
+            const fileName = tableName.replace(/_/g, '-');
+            return `./src/graphql/${fileName}`;
+        },
+        extension: 'gql',
+        fileName: 'operation',
     },
 };
 const envConfig = (env) => {
