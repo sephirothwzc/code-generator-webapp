@@ -211,7 +211,7 @@ const confirmDBConfig = async (database: string) => {
       default: 'Y',
     },
   ];
-  const value = await inquirer.prompt(questions);
+  const value = await inquirer.prompt<any>(questions);
 
   !value.dbRest && process.exit(1);
 };
@@ -332,9 +332,9 @@ export const init = async (config: InitInProp) => {
   await confirmDBConfig(db.database);
   const tableList = await queryTable(db);
   // 选择导出表格
-  const tables = await askListQuestions(tableList, 'tableName', 'checkbox');
+  const tables: any = await askListQuestions(tableList, 'tableName', 'checkbox');
   // 选择导出对象
-  const types = await askListQuestions(codeTypeArray, 'fileType', 'checkbox');
+  const types: any = await askListQuestions(codeTypeArray, 'fileType', 'checkbox');
 
   await fileSend(tables.tableName as any, types.fileType as any, db);
 
