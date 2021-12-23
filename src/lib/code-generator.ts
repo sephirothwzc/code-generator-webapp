@@ -145,6 +145,7 @@ const codeTypeArray = [
   'service',
   'gql-react',
   'react-antd-list',
+  'react-antd-item',
 ];
 
 /**
