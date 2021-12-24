@@ -285,6 +285,8 @@ const notColumn = [
   'deleted_id',
   'i18n',
   'business_code',
+  'id',
+  'version',
 ];
 
 const itemWhere = (col: IQueryColumnOut) => {
