@@ -19,7 +19,7 @@ import {
 } from '../../generator/basics-serialize.operation';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import { ${className}SaveIn } from '../../generator/basics-serialize';
-import ProForm, { ProFormText } from '@ant-design/pro-form';
+import ProForm, { ProFormText, ProFormDatePicker } from '@ant-design/pro-form';
 import {
   formLayout,
   gqlErrorMessage,

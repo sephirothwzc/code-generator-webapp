@@ -54,7 +54,7 @@ import { format } from 'date-fns';
 // #region type
 type SetColumnType = { key: keyof ${className}Fragment; [p: string]: any };
 type FilterType = {
-  [p in keyof ${className}Fragment]: WhereType;
+  [p in keyof ${className}Fragment]?: WhereType;
 };
 // #endregion
 
