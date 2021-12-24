@@ -5,7 +5,7 @@ const lodash_1 = require("lodash");
 const helper_1 = require("../utils/helper");
 const modelTemplate = ({ funName, className, routerName, propertyWhere, propertyColunm, }) => {
     return `import { FC, ReactNode, useRef } from 'react';
-import { Popconfirm, Button, message, Tag } from 'antd';
+import { Popconfirm, Button, message, Tag, FormInstance } from 'antd';
 import { useImmer } from 'use-immer';
 import {
   generatorColumns,
@@ -15,6 +15,7 @@ import {
   proSortToOrder,
   gqlErrorMessage,
   timeFormatHelper,
+  generatorExcelColumns,
 } from '../../utils/antd-helper';
 import { toString, toInteger, debounce } from 'lodash';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
@@ -33,9 +34,11 @@ import {
   Find${className}ListDocument,
   use${className}DestroyMutation,
   use${className}Mutation,
+  useExport${className}AllQuery,
   useFind${className}ListQuery,
 } from '../../generator/basics-serialize.operation';
 import { MutationFunctionOptions, FetchResult } from '@apollo/client';
+import { format } from 'date-fns';
 
 // #region type
 type SetColumnType = { key: keyof ${className}Fragment; [p: string]: any };
@@ -216,6 +219,31 @@ const List: FC = () => {
    */
   const { refetch } = useFind${className}ListQuery({ skip: true });
 
+  // #region 导出excel
+  const Export = useExport${className}AllQuery({ skip: true });
+  /**
+   * 导出excel
+   */
+
+  const refProTableForm = useRef<FormInstance>();
+  const feedbacksExport = () => {
+    const filterValue = refProTableForm.current?.getFieldsValue();
+    const where = filtersToWhere([filterValue], whereModel);
+
+    Export.refetch({
+      param: {
+        where,
+      },
+      dataRoot: '${className}All',
+      columns: [
+        { key: 'id', name: 'ID', path: '$.id' },
+        ...generatorExcelColumns(columnsDefault),
+      ],
+      fileName: \`\${format(new Date(), 'yyyyMMdd')}.xls\`,
+    });
+  };
+  // #endregion
+
   return (
     <ProTable<${className}Fragment>
       columns={columns}
@@ -253,6 +281,9 @@ const List: FC = () => {
           onClick={() => history.push('/${routerName}/')}
         >
           新增
+        </Button>,
+        <Button type="primary" key="primary" onClick={feedbacksExport}>
+          导出
         </Button>,
       ]}
       debounceTime={toInteger(process.env.REACT_APP_ANTD_DEBOUNCE)}
