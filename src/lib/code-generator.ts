@@ -11,6 +11,7 @@ import { send as operationSend } from './code-template/code-operation';
 import { send as resolverSend } from './code-template/code-resolver';
 import { send as reactGql } from './code-template/code-react-gql';
 import { send as reactAntdList } from './code-template/code-react-antd-list';
+import { send as reactAntdItem } from './code-template/code-react-antd-item';
 import fs from 'fs';
 import { promisify } from 'util';
 import bluebird from 'bluebird';
@@ -211,6 +212,15 @@ const allFun = {
     },
     extension: 'tsx',
     fileName: 'list',
+  },
+  'react-antd-item': {
+    fun: reactAntdItem,
+    path: (tableName: string) => {
+      const fileName = tableName.replace(/_/g, '-');
+      return `./src/views/${fileName}`;
+    },
+    extension: 'tsx',
+    fileName: 'item',
   },
 };
 

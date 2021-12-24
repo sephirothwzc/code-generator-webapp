@@ -17,6 +17,7 @@ const code_operation_1 = require("./code-template/code-operation");
 const code_resolver_1 = require("./code-template/code-resolver");
 const code_react_gql_1 = require("./code-template/code-react-gql");
 const code_react_antd_list_1 = require("./code-template/code-react-antd-list");
+const code_react_antd_item_1 = require("./code-template/code-react-antd-item");
 const fs_1 = __importDefault(require("fs"));
 const util_1 = require("util");
 const bluebird_1 = __importDefault(require("bluebird"));
@@ -86,6 +87,15 @@ const allFun = {
         },
         extension: 'tsx',
         fileName: 'list',
+    },
+    'react-antd-item': {
+        fun: code_react_antd_item_1.send,
+        path: (tableName) => {
+            const fileName = tableName.replace(/_/g, '-');
+            return `./src/views/${fileName}`;
+        },
+        extension: 'tsx',
+        fileName: 'item',
     },
 };
 const envConfig = (env) => {
