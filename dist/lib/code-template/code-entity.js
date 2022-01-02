@@ -14,6 +14,9 @@ const notColumn = [
     'updated_id',
     'deleted_id',
     'i18n',
+    'version',
+    'business_code',
+    'version',
 ];
 const findTypeTxt = (p) => {
     switch (p.dataType) {
