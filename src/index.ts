@@ -11,19 +11,26 @@ const findParam = (): InitInProp => {
   const def = process.argv.slice(2);
   if (['helper', '--h', '--helper'].includes(def[0])) {
     console.log(`
---db=<sequelize.config.name[default:development]>
+--u=[url] by server restful swagger or uri
 `);
     exit();
   }
+
   const arg = minimist(process.argv.slice(2));
-  const configNodeEnv: string = arg['db'] || 'development';
-  return { configNodeEnv };
+  if (!arg['u'] && !arg['uri']) {
+    console.log(`
+--u=[url] by server restful swagger or uri
+`);
+    exit();
+  }
+  const restfulWebUri: string = arg['u'] || arg['uri'];
+  return { restfulWebUri };
 };
 
 const app = async () => {
   console.log(
     chalk.green(
-      figlet.textSync('zhanchao.wu', {
+      figlet.textSync('WanDa', {
         font: 'Ghost',
         horizontalLayout: 'default',
         verticalLayout: 'default',

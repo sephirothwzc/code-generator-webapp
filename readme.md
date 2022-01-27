@@ -36,7 +36,21 @@ Push an existing Git repository
 # 替换git
 $ cd existing_repo
 $ git remote rename origin old-origin
-$ git remote add origin git@gitlab.cyberstone.com.cn:midway-base/yongding-river.git
+$ git remote add origin git@github.com:sephirothwzc/code-generator-webapp.git
 $ git push -u origin --all
 $ git push -u origin --tags
+```
+
+## 使用方式
+
+- 请根目录创建 文件 [./code-generator.json]
+
+```json
+{
+  "uri": "http:xxxx",
+  "servicePath": "/src/service",
+  "serviceName": "restfulService.ts",
+  "typePath": "/src/service",
+  "typeName": "restfulType.ts"
+}
 ```

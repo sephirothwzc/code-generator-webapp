@@ -33,16 +33,14 @@
   "author": "zhanchao.wu@icloud.com",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.25.0",
     "bluebird": "^3.7.2",
     "chalk": "^4.1.2",
     "figlet": "^1.5.2",
     "inquirer": "^8.1.5",
     "lodash": "^4.17.21",
     "minimist": "^1.2.5",
-    "mysql2": "^2.3.0",
     "reflect-metadata": "^0.1.13",
-    "sequelize": "^6.6.5",
-    "sequelize-typescript": "^2.1.1",
     "shelljs": "^0.8.4"
   },
   "husky": {
