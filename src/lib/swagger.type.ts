@@ -32,27 +32,53 @@ export type Parameters = {
   schema: {
     $ref: string;
   };
+  /**
+   * type 与 schema 互斥
+   */
+  type: string;
+};
+
+export type Responses = {
+  description?: string;
+  type?: string;
+  schema?: {
+    /**
+     * object-> $ref array-> items
+     */
+    type?: string;
+    items?: {
+      type: string;
+    };
+    $ref?: string;
+    additionalProperties: {
+      $ref?: string;
+    };
+  };
 };
 
 export type PathMethod = {
+  /**
+   * 标签
+   */
   tags: Array<string>;
+  /**
+   * 说明
+   */
   summary: string;
   /**
    * 注释
    */
   description: string;
   /**
+   * 方法唯一 方法名
+   */
+  operationId: string;
+  /**
    * 参数
    */
   parameters: Array<Parameters>;
   responses: {
-    200?: {
-      description?: string;
-      schema?: {
-        type?: 'array';
-        $ref?: string;
-      };
-    };
+    200?: Responses;
   };
 };
 
